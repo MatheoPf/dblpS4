@@ -1,7 +1,7 @@
 Tuto comment se connecté au projet :
 
 Aller sur vsc 3ème onglet puis 1er bouton
-3petit point puis clone coller https://github.com/trethore/SAE3-PACT-TripEnArvor.git
+3petit point puis clone coller https://github.com/MatheoPf/dblpS4.git
 puis pacer dans votre dossier de travail
 dans le terminal :
 
