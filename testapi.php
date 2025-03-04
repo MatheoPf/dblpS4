@@ -1,5 +1,15 @@
 <?php 
 
+include('connect_params.php');
+try {
+    $dbh = new PDO("pgsql:host=$server;dbname=$dbname", 
+            $user, $pass);
+    
+} catch (PDOException $e) {
+    print "Erreur !: " . $e->getMessage() . "<br/>";
+    die();
+}
+
 stream_context_set_default([
     'http' => [
         'proxy' => '129.20.239.11:3128'
@@ -82,10 +92,14 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
             $auteur_nom = $auteur["text"];
             echo "Auteur Nom : ". $auteur_nom. "<br><br>";
 
+            // $auteur_orc_id = $auteur['orcid'];
+
             try {
-                $query = "INSERT INTO AnalyseGeo._auteurs(pid, orcid, nom, prenom) VALUES (?,?,?,?)";
-            } catch (\Throwable $th) {
-                //throw $th;
+                $query = "INSERT INTO AnalyseGeo._auteurs(pid, nom) VALUES (?,?)";
+                $stmt = $dbh->prepare($query);
+                $stmt->execute([$auteur_pid, $auteur_nom]);
+            } catch (PDOException $e) {
+                print "Erreur PDO auteur: " . $e->getMessage() . "<br/>";
             }
         }
         echo "<br>";
@@ -95,26 +109,34 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
         
 }
 
-switch ($type) {
-    case 'Journal Articles':
-        $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero]);
-        break;
 
-    case 'Conference and Workshop Papers' :
-        $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
-        break;
+try {
+    switch ($type) {
+        case 'Journal Articles':
+            $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero]);
+            break;
     
-    default:
-        echo "probleme requete revues ou conference";
-        break;
+        case 'Conference and Workshop Papers' :
+            $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
+            break;
+        
+        default:
+            echo "probleme switch revues ou conference";
+            break;
+    }
+} catch (PDOException $e) {
+    print "Erreur PDO : " . $e->getMessage() . "<br/>";
 }
 
+$dbh = null;
 
 ?>
+
+
 
 
 
