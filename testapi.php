@@ -19,51 +19,61 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
         $id_dblp = $publi['@id'];
         echo "ID DBLP : " . $id_dblp . "<br><br>";
 
-        $type = $publi['info']['type'];
-        echo "Type : " . $type . "<br><br>";
-
-        
-        $doi = $publi['info']['doi']; 
-        echo "DOI : " . $doi . "<br><br>";
-
-        
-        $titre = $publi['info']['title'];
-        echo "Titre : " . $titre . "<br><br>";
-
-        
-        $lieu = $publi['info']['venue'];
-        echo "Lieu : " . $lieu . "<br><br>";
-
-       
-        $annee = $publi['info']['year'];
-        echo "Année : " . $annee. "<br><br>";
-
-        
-        $pages = $publi['info']['pages'];
-        echo "Pages : " . $pages . "<br><br>";
-
-        
-        $ee = $publi['info']['ee'];
-        echo "EE : " . $ee . "<br><br>";
-
-        
-        $url_dblp = $publi['info']['url'];
-        echo "URL DBLP : " . $url_dblp . "<br><br>";
-
-        if ($publi['info']['type'] == "Journal Articles"){
-            $volume = $publi['info']['volume'];
-            echo "Volume : " . $volume . "<br><br>";
-
-            $numero_page = $publi['info']['number'];
-
-            if(isset($numero_page)){
-                echo "Numero de page : " . $numero_page . "<br><br>";
-            }
-
-           
-            
+        if (isset($publi['info']['type'])) {
+            $type = $publi['info']['type'];
+            echo "Type : " . $type . "<br><br>";       
         }
+        
+        if ($publi['info']['doi']) {
+            $doi = $publi['info']['doi']; 
+            echo "DOI : " . $doi . "<br><br>";
+        }
+        
+        if(isset($publi['info']['title'])){
+            $titre = $publi['info']['title'];
+            echo "Titre : " . $titre . "<br><br>";
+        }
+       
 
+        if (isset($publi['info']['venue'])) {
+            $lieu = $publi['info']['venue'];
+            echo "Lieu : " . $lieu . "<br><br>";
+        }
+        
+
+        if (isset($publi['info']['year'])) {
+            $annee = $publi['info']['year'];
+            echo "Année : " . $annee. "<br><br>";
+        }
+        
+        if (isset($publi['info']['pages'])) {
+            $pages = $publi['info']['pages'];
+            echo "Pages : " . $pages . "<br><br>";
+        }
+        
+        
+        if(isset($publi['info']['ee'])){
+            $ee = $publi['info']['ee'];
+            echo "EE : " . $ee . "<br><br>";
+        }
+        
+        if(isset($publi['info']['url'])){
+            $url_dblp = $publi['info']['url'];
+            echo "URL DBLP : " . $url_dblp . "<br><br>";
+        }
+        
+        if ($publi['info']['type'] == "Journal Articles"){
+
+            if(isset($publi['info']['volume'])){
+                $volume = $publi['info']['volume'];
+                echo "Volume : " . $volume . "<br><br>";
+            }
+            
+            if(isset($publi['info']['number'])){
+                $numero_page = $publi['info']['number'];
+                echo "Numero de page : " . $numero_page . "<br><br>";
+            }   
+        }
         
         foreach ($publi['info']['authors']['author'] as $auteur) {
             $auteur_pid = $auteur["@pid"];
@@ -71,12 +81,36 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
             
             $auteur_nom = $auteur["text"];
             echo "Auteur Nom : ". $auteur_nom. "<br><br>";
+
+            try {
+                $query = "INSERT INTO AnalyseGeo._auteurs(pid, orcid, nom, prenom) VALUES (?,?,?,?)";
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
         }
         echo "<br>";
         
     }
         
         
+}
+
+switch ($type) {
+    case 'Journal Articles':
+        $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero]);
+        break;
+
+    case 'Conference and Workshop Papers' :
+        $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
+        break;
+    
+    default:
+        echo "probleme requete revues ou conference";
+        break;
 }
 
 
@@ -89,14 +123,4 @@ require_once('../php/connect_params.php');
         $dbh = new PDO("$driver:host=$server;dbname=$dbname", $user, $pass);
         $dbh->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         $dbh->prepare("SET SCHEMA 'sae';")->execute();
-        try{
-            switch ($_POST['type-compte']) {
-                case 'membre':
-                    $pseudo = $_POST['pseudo'];
-                    if ($name === '') $name = null;
-                    if ($first_name === '') $first_name = null;
-                    if ($tel === '') $tel = null;
-                    $query = "INSERT INTO sae.compte_membre (nom_compte, prenom, email, tel, mot_de_passe, pseudo) VALUES (?, ?, ?, ?, ?, ?) RETURNING id_compte;";
-                    $stmt = $dbh->prepare($query);
-                    $stmt->execute([$name, $first_name, $email, $tel, $password_hash, $pseudo]);
-                    $_SESSION['id'] = $stmt->fetch()['id_compte'];
+        
