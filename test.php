@@ -10,5 +10,5 @@ $url = "https://dblp.org/search/publ/api?q=$auteur_enc&format=json";
 
 // Récupération des données
 $response = file_get_contents($url);
-echo "</pre>"
+$regexPID = "/(https:\/\/dblp\.org\/pid\/)(.*)/gm"
 ?>
