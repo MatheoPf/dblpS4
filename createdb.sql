@@ -54,3 +54,45 @@ drop table AnalyseGeo.import_villes;
   
 create or replace view AnalyseGeo.touteslesinfo as (
   select * from AnalyseGeo._villes inner join AnalyseGeo.pays_continent on pays = nom_pays);
+
+
+-- Création table publication
+create table if not exists AnalyseGeo._publications (
+  iddblp VARCHAR(50) PRIMARY KEY,
+  type VARCHAR(255),
+  doi VARCHAR(255),
+  titre VARCHAR(255),
+  lieu VARCHAR(255),
+  annee INTEGER,
+  pages VARCHAR(50),
+  ee VARCHAR(255),
+  url_dblp VARCHAR(255)
+);
+
+-- Création table revues
+CREATE TABLE if not exists AnalyseGeo._revues (
+  volume VARCHAR(255),
+  numero INTEGER
+) inherits (AnalyseGeo._publications);
+ALTER TABLE AnalyseGeo._revues ADD PRIMARY KEY (iddblp);
+
+--CREATE TABLE if not exists AnalyseGeo._conferences (
+  -- les données seront considérées plus tard
+-- ) inherits (AnalyseGeo._publications);
+-- ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (iddblp);
+
+-- Création table auteurs
+CREATE TABLE if not exists AnalyseGeo._auteurs (
+  pid VARCHAR(50) not null PRIMARY key,
+  orcid VARCHAR(20),
+  nom VARCHAR(100),
+  prenom VARCHAR(100)
+);
+
+-- Création table a_ecrit en lien avec les tables auteurs et publications
+CREATE TABLE if not exists AnalyseGeo.a_ecrit (
+  idPublication VARCHAR(50),
+  idAuteur VARCHAR(50)
+);
+ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (idPublication) REFERENCES AnalyseGeo._publication(iddblp);
+ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (idAuteur) REFERENCES AnalyseGeo._auteurs(pid);
