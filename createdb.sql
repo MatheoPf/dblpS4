@@ -1,4 +1,4 @@
--- create schema AnalyseGeo;
+create schema if not exists AnalyseGeo;
 set schema 'AnalyseGeo';
 
 create table if not exists AnalyseGeo.import_villes (
@@ -58,7 +58,7 @@ create or replace view AnalyseGeo.touteslesinfo as (
 
 -- Création table publication
 create table if not exists AnalyseGeo._publications (
-  iddblp VARCHAR(50) PRIMARY KEY,
+  id_dblp VARCHAR(50) PRIMARY KEY,
   type VARCHAR(255),
   doi VARCHAR(255),
   titre VARCHAR(255),
@@ -68,31 +68,36 @@ create table if not exists AnalyseGeo._publications (
   ee VARCHAR(255),
   url_dblp VARCHAR(255)
 );
+-- drop table AnalyseGeo._publications;
 
 -- Création table revues
 CREATE TABLE if not exists AnalyseGeo._revues (
   volume VARCHAR(255),
   numero INTEGER
 ) inherits (AnalyseGeo._publications);
-ALTER TABLE AnalyseGeo._revues ADD PRIMARY KEY (iddblp);
+ALTER TABLE AnalyseGeo._revues ADD PRIMARY KEY (id_dblp);
+-- drop table AnalyseGeo._revues
 
 CREATE TABLE if not exists AnalyseGeo._conferences (
   -- les données seront considérées plus tard
 ) inherits (AnalyseGeo._publications);
-ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (iddblp);
+ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (id_dblp);
+-- drop table AnalyseGeo._conférences
 
 -- Création table auteurs
 CREATE TABLE if not exists AnalyseGeo._auteurs (
-  pid VARCHAR(50) not null PRIMARY key,
-  orcid VARCHAR(20),
+  pid VARCHAR(50) PRIMARY key,
+  orc_id VARCHAR(20),
   nom VARCHAR(100),
   prenom VARCHAR(100)
 );
+-- drop table AnalyseGeo._auteurs;
 
 -- Création table a_ecrit en lien avec les tables auteurs et publications
 CREATE TABLE if not exists AnalyseGeo.a_ecrit (
-  idPublication VARCHAR(50),
-  idAuteur VARCHAR(50)
+  id_publication VARCHAR(50),
+  id_auteur VARCHAR(50)
 );
-ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (idPublication) REFERENCES AnalyseGeo._publication(iddblp);
-ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (idAuteur) REFERENCES AnalyseGeo._auteurs(pid);
+ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (id_publication) REFERENCES AnalyseGeo._publications(id_dblp);
+ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (id_auteur) REFERENCES AnalyseGeo._auteurs(pid);
+-- drop table AnalyseGeo.a_ecrit;
