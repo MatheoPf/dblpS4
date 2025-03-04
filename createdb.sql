@@ -76,10 +76,10 @@ CREATE TABLE if not exists AnalyseGeo._revues (
 ) inherits (AnalyseGeo._publications);
 ALTER TABLE AnalyseGeo._revues ADD PRIMARY KEY (iddblp);
 
---CREATE TABLE if not exists AnalyseGeo._conferences (
+CREATE TABLE if not exists AnalyseGeo._conferences (
   -- les données seront considérées plus tard
--- ) inherits (AnalyseGeo._publications);
--- ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (iddblp);
+) inherits (AnalyseGeo._publications);
+ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (iddblp);
 
 -- Création table auteurs
 CREATE TABLE if not exists AnalyseGeo._auteurs (
