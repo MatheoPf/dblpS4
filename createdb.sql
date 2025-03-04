@@ -51,6 +51,6 @@ copy AnalyseGeo.pays_continent (continent, pays)
 -- Supprime la table temporaire
 drop table AnalyseGeo.import_villes;
 
- 
+  
 create or replace view AnalyseGeo.touteslesinfo as (
   select * from AnalyseGeo._villes inner join AnalyseGeo.pays_continent on pays = nom_pays);
