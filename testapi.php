@@ -1,6 +1,6 @@
 <?php 
 
-include('connect_params.php');
+include('/home/etuinfo/capoupon/Documents/bdd/td1/connect_params.php');
 try {
     $dbh = new PDO("pgsql:host=$server;dbname=$dbname", 
             $user, $pass);
