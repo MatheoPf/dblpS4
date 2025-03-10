@@ -97,7 +97,8 @@ CREATE TABLE if not exists AnalyseGeo._auteurs (
 -- Création table a_ecrit en lien avec les tables auteurs et publications
 CREATE TABLE if not exists AnalyseGeo.a_ecrit (
   id_publication VARCHAR(50),
-  id_auteur VARCHAR(50)
+  id_auteur VARCHAR(50),
+  odre int
 );
 ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (id_publication) REFERENCES AnalyseGeo._publications(id_dblp);
 ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (id_auteur) REFERENCES AnalyseGeo._auteurs(pid);

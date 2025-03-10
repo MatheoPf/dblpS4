@@ -1,5 +1,5 @@
 <?php 
-
+/*
 include('connect_params.php');
 try {
     $dbh = new PDO("pgsql:host=$server;dbname=$dbname", 
@@ -9,7 +9,7 @@ try {
     print "Erreur !: " . $e->getMessage() . "<br/>";
     die();
 }
-
+*/
 stream_context_set_default([
     'http' => [
         'proxy' => '129.20.239.11:3128'
@@ -93,7 +93,7 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
             echo "Auteur Nom : ". $auteur_nom. "<br><br>";
 
             // $auteur_orc_id = $auteur['orcid'];
-
+            /*
             try {
                 $query = "INSERT INTO AnalyseGeo._auteurs(pid, nom) VALUES (?,?)";
                 $stmt = $dbh->prepare($query);
@@ -101,6 +101,7 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
             } catch (PDOException $e) {
                 print "Erreur PDO auteur: " . $e->getMessage() . "<br/>";
             }
+            */
         }
         echo "<br>";
         
