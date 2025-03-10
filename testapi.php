@@ -5,6 +5,8 @@ try {
     $dbh = new PDO("pgsql:host=$server;dbname=$dbname", 
             $user, $pass);
     
+    $dbh->prepare("SET SCHEMA 'analysegeo';")->execute();
+    
 } catch (PDOException $e) {
     print "Erreur !: " . $e->getMessage() . "<br/>";
     die();
@@ -84,22 +86,58 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
                 echo "Numero de page : " . $numero_page . "<br><br>";
             }   
         }
+
+        try {
+            switch ($type) {
+                case 'Journal Articles':
+                    $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt_publi = $dbh->prepare($query);
+                    $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero]);
+                    break;
+            
+                case 'Conference and Workshop Papers' :
+                    $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt_publi = $dbh->prepare($query);
+                    $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
+                    break;
+                
+                default:
+                    echo "probleme switch revues ou conference";
+                    break;
+            }
+        } catch (PDOException $e) {
+            print "Erreur PDO : " . $e->getMessage() . "<br/>";
+        }
+
+
         
+        $ordre_auteur = 0;
         foreach ($publi['info']['authors']['author'] as $auteur) {
+            $ordre_auteur += 1;
             $auteur_pid = $auteur["@pid"];
             echo "Auteur PID : ". $auteur_pid. "<br>";
             
             $auteur_nom = $auteur["text"];
             echo "Auteur Nom : ". $auteur_nom. "<br><br>";
+            
 
             // $auteur_orc_id = $auteur['orcid'];
+            
 
             try {
-                $query = "INSERT INTO AnalyseGeo._auteurs(pid, nom) VALUES (?,?)";
-                $stmt = $dbh->prepare($query);
-                $stmt->execute([$auteur_pid, $auteur_nom]);
+                $query = "INSERT INTO AnalyseGeo._auteurs(pid, nom) VALUES (?,?) ON CONFLICT (pid) DO NOTHING";
+                $stmt_auteur = $dbh->prepare($query);
+                $stmt_auteur->execute([$auteur_pid, $auteur_nom]);
             } catch (PDOException $e) {
                 print "Erreur PDO auteur: " . $e->getMessage() . "<br/>";
+            }
+
+            try {
+                $query_a_ecrit = "INSERT INTO AnalyseGeo.a_ecrit(pid, id_dblp, ordre) VALUES (?,?,?);";
+                $stmt_a_ecrit = $dbh->prepare($query_a_ecrit);
+                $stmt_a_ecrit->execute([$auteur_pid, $id_dblp, $ordre_auteur]);
+            } catch (PDOException $e) {
+                print "Erreur PDO a ecrit: " . $e->getMessage() . "<br/>";
             }
         }
         echo "<br>";
@@ -110,27 +148,9 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
 }
 
 
-try {
-    switch ($type) {
-        case 'Journal Articles':
-            $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero]);
-            break;
-    
-        case 'Conference and Workshop Papers' :
-            $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
-            break;
-        
-        default:
-            echo "probleme switch revues ou conference";
-            break;
-    }
-} catch (PDOException $e) {
-    print "Erreur PDO : " . $e->getMessage() . "<br/>";
-}
+
+
+
 
 $dbh = null;
 
