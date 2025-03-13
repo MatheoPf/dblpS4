@@ -1,6 +1,6 @@
 <?php 
 
-include('/home/etuinfo/capoupon/Documents/bdd/td1/connect_params.php');
+include('/home/etuinfo/capoupon/Téléchargements/connect_params.php');
 try {
     $dbh = new PDO("pgsql:host=$server;dbname=$dbname", 
             $user, $pass);
@@ -39,39 +39,53 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
         if ($publi['info']['doi']) {
             $doi = $publi['info']['doi']; 
             echo "DOI : " . $doi . "<br><br>";
+        }else {
+            $doi = null;
         }
         
         if(isset($publi['info']['title'])){
             $titre = $publi['info']['title'];
             echo "Titre : " . $titre . "<br><br>";
+        }else {
+            $titre = null;
         }
        
 
         if (isset($publi['info']['venue'])) {
             $lieu = $publi['info']['venue'];
             echo "Lieu : " . $lieu . "<br><br>";
+        }else{
+            $lieu = null;
         }
         
 
         if (isset($publi['info']['year'])) {
             $annee = $publi['info']['year'];
             echo "Année : " . $annee. "<br><br>";
+        }else {
+            $annee = null;
         }
         
         if (isset($publi['info']['pages'])) {
             $pages = $publi['info']['pages'];
             echo "Pages : " . $pages . "<br><br>";
+        }else {
+            $pages = null;
         }
         
         
         if(isset($publi['info']['ee'])){
             $ee = $publi['info']['ee'];
             echo "EE : " . $ee . "<br><br>";
+        }else {
+            $ee = null;
         }
         
         if(isset($publi['info']['url'])){
             $url_dblp = $publi['info']['url'];
             echo "URL DBLP : " . $url_dblp . "<br><br>";
+        }else {
+            $url_dblp = null;
         }
         
         if ($publi['info']['type'] == "Journal Articles"){
@@ -79,12 +93,16 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
             if(isset($publi['info']['volume'])){
                 $volume = $publi['info']['volume'];
                 echo "Volume : " . $volume . "<br><br>";
+            }else{
+                $volume = null;
             }
             
             if(isset($publi['info']['number'])){
                 $numero_page = $publi['info']['number'];
                 echo "Numero de page : " . $numero_page . "<br><br>";
-            }   
+            }  else {
+                $numero_page = null;
+            } 
         }
 
         try {
@@ -92,7 +110,7 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
                 case 'Journal Articles':
                     $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt_publi = $dbh->prepare($query);
-                    $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero]);
+                    $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero_page]);
                     break;
             
                 case 'Conference and Workshop Papers' :
@@ -114,11 +132,11 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
         $ordre_auteur = 0;
         foreach ($publi['info']['authors']['author'] as $auteur) {
             $ordre_auteur += 1;
-            $auteur_pid = $auteur["@pid"];
-            echo "Auteur PID : ". $auteur_pid. "<br>";
+            $auteur_pid = $auteur['@pid'];
+            echo "Auteur PID : ". $auteur_pid . "<br>";
             
             $auteur_nom = $auteur["text"];
-            echo "Auteur Nom : ". $auteur_nom. "<br><br>";
+            echo "Auteur Nom : ". $auteur_nom . "<br><br>";
             
 
             // $auteur_orc_id = $auteur['orcid'];
@@ -159,10 +177,4 @@ $dbh = null;
 
 
 
-
-
-require_once('../php/connect_params.php');
-        $dbh = new PDO("$driver:host=$server;dbname=$dbname", $user, $pass);
-        $dbh->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $dbh->prepare("SET SCHEMA 'sae';")->execute();
         
