@@ -11,3 +11,7 @@ Pour changer de branche :
 
 git pull
 puis en bas a gauche on peut changer de branche
+
+Pour docker
+
+vérifier les fichiers "docker-compose -f docker-compose.yml up -d"
