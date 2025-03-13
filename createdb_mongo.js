@@ -13,8 +13,8 @@ db.a_ecrit.drop();
 
 // Importation des villes depuis CSV
 print("Importation des villes...");
-db.import_villes.insertMany(
-  cat("worldcities.json").map(JSON.parse)
+db.villes.insertMany(
+  JSON.parse(cat('/data/db/worldcities.json'))
 );
 
 // Transformation des données et insertion dans la collection `villes`
@@ -35,8 +35,8 @@ db.import_villes.drop();
 
 // Importation des pays et continents depuis CSV
 print("Importation des pays et continents...");
-db.pays_continent.insertMany(
-  cat("countries-continents.json").map(JSON.parse)
+db.pays_continent.insertMany(JSON.parse(
+  cat("countries-continents.json"))
 );
 
 // Création de publications, revues et conférences
