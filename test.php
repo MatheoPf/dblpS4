@@ -1,14 +1,11 @@
 <?php
-phpinfo();
+require 'vendor/autoload.php';
 
-// Nom de l'auteur
-$auteur = "Arnaud Delhay"; 
-$auteur_enc = urlencode($auteur);
+$client = new MongoDB\Client("mongodb://root:example@mongodb:27017");
+$databases = $client->listDatabases();
 
-// URL
-$url = "https://dblp.org/search/publ/api?q=$auteur_enc&format=json";
-
-// Récupération des données
-$response = file_get_contents($url);
-echo "</pre>"
+echo "<h2>MongoDB fonctionne ! Voici les bases de données :</h2>";
+foreach ($databases as $db) {
+    echo $db['name'] . "<br>";
+}
 ?>
