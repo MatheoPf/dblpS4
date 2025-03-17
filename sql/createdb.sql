@@ -35,9 +35,9 @@ create table if not exists AnalyseGeo.pays_continent(
 -- drop table AnalyseGeo.pays_continent;
 
 --	copy
-copy AnalyseGeo.import_villes
-from 'D:\iut\Semestre2\Analyse\worldcities.csv'
-with (format csv, header true, delimiter ',');
+COPY AnalyseGeo.import_villes
+FROM '/docker-entrypoint-initdb.d/worldcities.csv'
+WITH (FORMAT csv, HEADER true, DELIMITER ',');
 
 -- Insertion de import_villes à villes
 insert into AnalyseGeo._villes (id, nom_ville, latitude, longitude, iso, nom_pays)
@@ -46,8 +46,9 @@ from AnalyseGeo.import_villes
 on conflict (id) do nothing;
 
 -- copy
-copy AnalyseGeo.pays_continent (continent, pays)
-    from 'D:\iut\Semestre2\Analyse\Countries-Continents.csv' with delimiter ',' csv header; 
+COPY AnalyseGeo.pays_continent (continent, pays)
+FROM '/docker-entrypoint-initdb.d/Countries-Continents.csv'
+WITH (DELIMITER ',', FORMAT csv, HEADER true);
 
 -- Supprime la table temporaire
 drop table AnalyseGeo.import_villes;
