@@ -1,9 +1,0 @@
-il faut trouver la direction vers laquelle on veut aller : 
-- recuperer les infos et les mettre dans une bdd
-- les afficher : titre et auteurs, année, lien consultation, type de publication
-- carte js des points representent les publications on clique pour avoir les infos
-
-
-
-
-l'ordre des auteurs a une importance (ex : le 1er a resolu le pb, le dernier est l'encadrant)

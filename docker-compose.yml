@@ -13,7 +13,6 @@ services:
       - GIT_TOKEN=${GIT_TOKEN}
     env_file:
       - .env
-    command: ["/bin/bash", "-c", "/usr/local/bin/update.sh && apache2-foreground"]
     depends_on:
       - db
     restart: always

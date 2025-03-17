@@ -15,8 +15,7 @@ puis en bas a gauche on peut changer de branche
 PHP/Apache -> http://localhost:8080
 pgAdmin -> http://localhost:5050
 
-Pour docker
-changer le docenv en .env
+Pour docker : 
 docker-compose up -d --build
 
 Puis cliquer sur "Attach to running container..."
