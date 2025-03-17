@@ -1,72 +1,55 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:6-jammy
-    container_name: mongodb
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-      MONGO_INITDB_DATABASE: testdb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-      - ./import:/data/import  # Ajout du dossier d'import
-      - ./mongo_import.js:/docker-entrypoint-initdb.d/mongo_import.js  # Import auto au démarrage
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mongo-express:
-    image: mongo-express
-    container_name: mongo-express
-    restart: always
-    ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongodb:27017/
-    networks:
-      - app-network
-
-  nominatim:
-    image: mediagis/nominatim:4.5
-    ports:
-      - "8080:8080"
-    environment:
-      PBF_URL: https://download.geofabrik.de/europe/monaco-latest.osm.pbf
-      REPLICATION_URL: https://download.geofabrik.de/europe/monaco-updates/
-      NOMINATIM_PASSWORD: very_secure_password
-    volumes:
-      - nominatim-data:/var/lib/postgresql/14/main
-    networks:
-      - app-network
-    shm_size: 1gb
-
   web:
     build: .
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      nominatim:
-        condition: service_started
-    environment:
-      DATABASE_URL: mongodb://root:example@mongodb:27017/testdb
-      NOMINATIM_URL: http://nominatim:8080/
+    container_name: php_app
     ports:
-      - "8000:80"  # Apache écoute sur le port 80, on le mappe sur 8000
-    networks:
-      - app-network
+      - "8080:80"
+    volumes:
+      - ./www:/var/www/html
+    environment:
+      - GIT_USER=${GIT_USER}
+      - GIT_TOKEN=${GIT_TOKEN}
+    env_file:
+      - .env
+    command: ["/bin/bash", "-c", "/usr/local/bin/update.sh && apache2-foreground"]
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  git:
+    image: alpine/git
+    container_name: git_container
+    volumes:
+      - ./www:/repo
+    entrypoint: [ "tail", "-f", "/dev/null" ]
 
 volumes:
-  mongo_data:
-  nominatim-data:
-
-networks:
-  app-network:
+  pgdata:
+  pgadmin_data:

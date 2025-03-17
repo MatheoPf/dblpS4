@@ -12,6 +12,12 @@ Pour changer de branche :
 git pull
 puis en bas a gauche on peut changer de branche
 
+PHP/Apache -> http://localhost:8080
+pgAdmin -> http://localhost:5050
+
 Pour docker
 
-vérifier les fichiers "docker-compose -f docker-compose.yml up -d"
+docker-compose up -d --build
+
+Puis cliquer sur "Attach to running container..."
+Ensuite "php_app"
