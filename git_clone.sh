@@ -3,7 +3,7 @@
 # Aller dans le dossier www
 cd www
 
-# Vérifier si le dépôt Git est déjà cloné
+# Vérifier si le dépôt est déjà cloné
 if [ -d ".git" ]; then
     echo "Le dépôt Git existe déjà, mise à jour..."
     git pull origin main
@@ -13,15 +13,19 @@ else
     # Initialiser un dépôt vide
     git init
 
-    # Ajouter le remote avec authentification (utilise les variables du .env)
-    git remote add origin https://$GIT_USER:$GIT_TOKEN@github.com/ton-utilisateur/ton-repo.git
+    # Ajouter le remote avec authentification
+    git remote add origin https://$GIT_USER:$GIT_TOKEN@github.com/MatheoPf/dblpS4.git
 
-    # Activer sparse-checkout
+    # Activer sparse-checkout pour ne récupérer qu'un dossier spécifique
     git config core.sparseCheckout true
 
-    # Définir le dossier à récupérer (remplace `mon_dossier` par le bon chemin)
-    echo "mon_dossier/*" > .git/info/sparse-checkout
+    # Définir le dossier à récupérer (remplace `chemin/dossier` par le bon chemin)
+    echo "html/*" > .git/info/sparse-checkout
 
     # Récupérer uniquement ce dossier
     git pull origin main
+
+    # Déplacer les fichiers à la racine de www et nettoyer
+    mv html/* .
+    rm -rf html
 fi
