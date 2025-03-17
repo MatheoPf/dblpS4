@@ -16,7 +16,7 @@ PHP/Apache -> http://localhost:8080
 pgAdmin -> http://localhost:5050
 
 Pour docker
-
+changer le docenv en .env
 docker-compose up -d --build
 
 Puis cliquer sur "Attach to running container..."
