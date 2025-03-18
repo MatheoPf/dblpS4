@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Titre</h1>
-    <a href="remplir.php">Créer et Remplir la base de données</a>
-    <a href="">Exploiter l'outil</a>
+    <a href="remplir.php">Remplir la base de données</a>
+    <h2>Exploiter l'outil</h2>
 </body>
 </html>
