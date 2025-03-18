@@ -54,7 +54,7 @@ WITH (DELIMITER ',', FORMAT csv, HEADER true);
 drop table AnalyseGeo.import_villes;
 
   
-create or replace view AnalyseGeo.touteslesinfo as (
+create or replace view AnalyseGeo.touteslesinfos as (
   select * from AnalyseGeo._villes inner join AnalyseGeo.pays_continent on pays = nom_pays);
 
 
@@ -90,7 +90,8 @@ ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (id_dblp);
 CREATE TABLE if not exists AnalyseGeo._auteurs (
   pid VARCHAR(50),
   orc_id VARCHAR(20),
-  nom VARCHAR(100)
+  hal_id VARCHAR(255),
+  nom VARCHAR(255)
 );
 ALTER TABLE AnalyseGeo._auteurs ADD PRIMARY KEY (pid);
 -- drop table AnalyseGeo._auteurs;
@@ -110,7 +111,7 @@ ALTER TABLE AnalyseGeo.a_ecrit ADD FOREIGN KEY (pid) REFERENCES AnalyseGeo._aute
 CREATE TABLE if not exists AnalyseGeo._affiliations (
 	id_lab integer,
 	acronyme varchar(50),
-	nom varchar(255),
+	nom_lab varchar(255),
 	id_adresse int
 );
 ALTER TABLE AnalyseGeo._affiliations ADD PRIMARY KEY (id_lab);
@@ -121,8 +122,18 @@ CREATE TABLE if not exists AnalyseGeo._adresses (
 	id_adresse serial,
 	cp int,
   rue varchar(255),
-	ville varchar(100),
+	nom_ville varchar(100)
 );
 ALTER TABLE AnalyseGeo._adresses ADD PRIMARY KEY (id_adresse);
-ALTER TABLE AnalyseGeo._affiliations ADD FOREIGN KEY (id_adresse) REFERENCES AnalyseGeo._adresses(id_adresse);
+ALTER TABLE AnalyseGeo._adresses ADD FOREIGN KEY (id_adresse) REFERENCES AnalyseGeo._affiliations(id_adresse);
 -- drop table AnalyseGeo._adresses;
+
+-- Création table _est_affilie en lien avec les table _affiliations et _auteurs
+CREATE TABLE if not exists AnalyseGeo._est_affilie (
+    hal_id VARCHAR(50),
+    id_lab INTEGER
+);
+ALTER TABLE AnalyseGeo._est_affilie ADD PRIMARY KEY (hal_id, id_lab);
+ALTER TABLE AnalyseGeo._est_affilie ADD FOREIGN KEY (hal_id) REFERENCES AnalyseGeo._auteurs(hal_id) ON DELETE CASCADE;
+ALTER TABLE AnalyseGeo._est_affilie ADD FOREIGN KEY (id_lab) REFERENCES AnalyseGeo._affiliations(id_lab) ON DELETE CASCADE;
+-- drop table AnalyseGeo._est_affilie;
