@@ -11,23 +11,36 @@ services:
     environment:
       - GIT_USER=${GIT_USER}
       - GIT_TOKEN=${GIT_TOKEN}
+      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: always
+    networks:
+      - app-network
 
   db:
-    image: postgres
+    image: postgres:17
     container_name: postgres_db
     restart: always
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./data:/docker-entrypoint-initdb.d
+      - ./data/createdb.sql:/docker-entrypoint-initdb.d/createdb.sql  # Utilisation du fichier SQL
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d mydatabase"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4
@@ -39,9 +52,12 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - app-network
 
   git:
     image: alpine/git
@@ -49,7 +65,13 @@ services:
     volumes:
       - ./www:/repo
     entrypoint: [ "tail", "-f", "/dev/null" ]
+    networks:
+      - app-network
 
 volumes:
   pgdata:
   pgadmin_data:
+  postgres_data:
+
+networks:
+  app-network:
