@@ -104,17 +104,23 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
                 $numero_page = null;
             } 
         }
-
+        
         try {
+            $query_pub = "INSERT INTO AnalyseGeo._publications(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT (id_dblp) DO NOTHING;";
+            $stmt_pub = $dbh->prepare($query_pub);
+            $stmt_pub->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
+
             switch ($type) {
                 case 'Journal Articles':
-                    $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt_publi = $dbh->prepare($query);
                     $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero_page]);
                     break;
             
                 case 'Conference and Workshop Papers' :
-                    $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt_publi = $dbh->prepare($query);
                     $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
                     break;
@@ -123,7 +129,8 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
                     echo "probleme switch revues ou conference";
                     break;
             }
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
+            $dbh->rollBack();
             print "Erreur PDO : " . $e->getMessage() . "<br/>";
         }
 
@@ -161,9 +168,9 @@ foreach ($pays_decode['result']['hits']['hit'] as $publi) {
         echo "<br>";
         
     }
-        
-        
+      
 }
+
 
 
 

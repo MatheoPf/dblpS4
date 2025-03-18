@@ -11,6 +11,8 @@
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
      crossorigin=""></script>
     <title>Document</title>
+    </head>
+    <body>
 
     <table >
         <thead>
@@ -89,7 +91,7 @@
                 <td>
                     <?php echo $lapubli['numero']?>
                 </td>
-                <?php foreach() ?>
+      
             </tr>
             <?php } ?>
             
@@ -100,71 +102,32 @@
     </table
             
     
-</head>
-<body>
+
     
 </body>
 </html>
 
 <?php
-require 'vendor/autoload.php'; // Assurez-vous d'avoir installé le driver MongoDB via Composer
+include('/home/etuinfo/capoupon/Téléchargements/connect_params.php');
+ $reqPubli = "SELECT * FROM sae._publications";
+    
+ try {
+     $conn = new PDO("pgsql:host=$server;dbname=$dbname", $user, $pass);
+     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Ajout pour gérer les erreurs proprement
+     $conn->prepare("SET SCHEMA 'analysegeo';")->execute();
+     
+     $stmtPubli= $conn->prepare($reqPubli);
+     $stmtPubli->execute();
+     
+     $publications = $stmtPubli->fetchAll(PDO::FETCH_ASSOC); // Utilisation de fetchAll pour obtenir toutes les lignes
+     
+     $conn = null; 
 
-// Connexion à MongoDB
-$client = new MongoDB\Client("mongodb://localhost:27017"); // Ajustez l'URL si nécessaire
-$db = $client->analysegeo;  // Choix de la base de données
+     print_r($publications);
+    }catch(PDOExeception $e){
+        print "Erreur PDO : " . $e->getMessage() . "<br/>";
+    }
 
-// Sélectionner les collections
-$auteursCollection = $db->auteurs;  // La collection des auteurs
-$publicationsCollection = $db->publications;  // La collection des publications
-$aEcritCollection = $db->a_ecrit;  // La collection de l'association "a_ecrit"
-
-// Agrégation pour récupérer les informations des auteurs liés aux publications
-$pipeline = [
-    [
-        '$lookup' => [
-            'from' => 'a_ecrit',   // Collection à joindre
-            'localField' => '_id',  // Champ de la collection 'publications'
-            'foreignField' => 'id_publication',  // Champ de la collection 'a_ecrit'
-            'as' => 'auteurs'  // Résultat joint sous le champ 'auteurs'
-        ]
-    ],
-    [
-        '$unwind' => '$auteurs'  // Décompose le tableau d'auteurs dans chaque publication
-    ],
-    [
-        '$lookup' => [
-            'from' => 'auteurs',  // Joindre la collection des auteurs
-            'localField' => 'auteurs.id_auteur',  // Champ dans 'a_ecrit'
-            'foreignField' => '_id',  // Champ dans 'auteurs'
-            'as' => 'auteur_details'  // Résultat joint sous le champ 'auteur_details'
-        ]
-    ],
-    [
-        '$unwind' => '$auteur_details'  // Décompose les informations sur l'auteur
-    ],
-    [
-        '$project' => [
-            'titre' => 1,  // Information sur la publication
-            'annee' => 1,  // Information sur la publication
-            'auteur_nom' => '$auteur_details.nom',  // Nom de l'auteur
-            'auteur_prenom' => '$auteur_details.prenom',  // Prénom de l'auteur
-            'ordre' => '$auteurs.ordre'  // Position de l'auteur dans l'écriture
-        ]
-    ]
-];
-
-// Exécuter l'agrégation
-$resultat = $publicationsCollection->aggregate($pipeline);
-
-// Afficher les résultats
-foreach ($resultat as $publication) {
-    echo "Publication : " . $publication['titre'] . " (" . $publication['annee'] . ")\n";
-    echo "Auteur : " . $publication['auteur_nom'] . " " . $publication['auteur_prenom'] . "\n";
-    echo "Ordre de l'auteur : " . $publication['ordre'] . "\n\n";
-}
-
-// Fermer la connexion
-$client = null;
 ?>
 
 
