@@ -88,19 +88,41 @@ ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (id_dblp);
 
 -- Création table auteurs
 CREATE TABLE if not exists AnalyseGeo._auteurs (
-  pid VARCHAR(50) PRIMARY key,
+  pid VARCHAR(50),
   orc_id VARCHAR(20),
-  nom VARCHAR(100),
-  prenom VARCHAR(100)
+  nom VARCHAR(100)
 );
+ALTER TABLE AnalyseGeo._auteurs ADD PRIMARY KEY (pid);
 -- drop table AnalyseGeo._auteurs;
 
 -- Création table a_ecrit en lien avec les tables auteurs et publications
 CREATE TABLE if not exists AnalyseGeo.a_ecrit (
   id_dblp VARCHAR(50),
   pid VARCHAR(50),
-  ordre int
+  ordre INT
 );
-ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (id_dblp) REFERENCES AnalyseGeo._publications(id_dblp);
-ALTER TABLE AnalyseGeo.a_ecrit ADD Foreign Key (pid) REFERENCES AnalyseGeo._auteurs(pid);
+ALTER TABLE AnalyseGeo.a_ecrit ADD PRIMARY KEY (id_dblp, pid);
+ALTER TABLE AnalyseGeo.a_ecrit ADD FOREIGN KEY (id_dblp) REFERENCES AnalyseGeo._publications(id_dblp);
+ALTER TABLE AnalyseGeo.a_ecrit ADD FOREIGN KEY (pid) REFERENCES AnalyseGeo._auteurs(pid);
 -- drop table AnalyseGeo.a_ecrit;
+
+-- Création table _affiliations
+CREATE TABLE if not exists AnalyseGeo._affiliations (
+	id_lab integer,
+	acronyme varchar(50),
+	nom varchar(255),
+	id_adresse int
+);
+ALTER TABLE AnalyseGeo._affiliations ADD PRIMARY KEY (id_lab);
+-- drop table AnalyseGeo._affiliations;
+
+-- Création table _adresses en lien avec les table _affiliations et _villes
+CREATE TABLE if not exists AnalyseGeo._adresses (
+	id_adresse serial,
+	cp int,
+  rue varchar(255),
+	ville varchar(100),
+);
+ALTER TABLE AnalyseGeo._adresses ADD PRIMARY KEY (id_adresse);
+ALTER TABLE AnalyseGeo._affiliations ADD FOREIGN KEY (id_adresse) REFERENCES AnalyseGeo._adresses(id_adresse);
+-- drop table AnalyseGeo._adresses;

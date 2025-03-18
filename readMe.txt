@@ -1,4 +1,4 @@
-Tuto comment se connecté au projet :
+Comment se connecté au projet :
 
 Aller sur vsc 3ème onglet puis 1er bouton
 3petit point puis clone coller https://github.com/MatheoPf/dblpS4.git
@@ -18,5 +18,7 @@ pgAdmin -> http://localhost:5050
 Pour docker : 
 docker-compose up -d --build
 
-Puis cliquer sur "Attach to running container..."
-Ensuite "php_app"
+API Hal :
+Rechercher un auteur par son nom => "https://api.archives-ouvertes.fr/search/?q=authFullName_s:%22Laurent%20d%27Orazio%22&fl=authFullName_s,authIdHal_s,labStructName_s"
+Pour récupérer plus d'informations sur un laboratoire => "https://api.archives-ouvertes.fr/search/?q=authFullName_s:%22Laurent%20d%27Orazio%22&fl=labStructName_s,labStructId_i"
+Pour obtenir les détails d'un laboratoire via son labStructId_i => "https://api.archives-ouvertes.fr/search/?q=labStructId_i:%22486345%22&fl=labStructName_s,labStructAcronym_s,labStructAddress_s"
