@@ -1,3 +1,22 @@
+<?php
+require_once 'utils.php';
+
+$pdo = getDBConnection();
+$pid = isset($_GET['pid']) ? (int)$_GET['pid'] : null;
+
+if ($pid) {
+    $auteur = getAuteur($pdo, $pid);
+    if (!$auteur) {
+        die("Auteur non trouvé !");
+    }
+
+    $structures = getStructuresAffiliees($pdo, $auteur['hal_id']);
+    $publications = getPublications($pdo, $pid);
+    $nbPublications = count($publications);
+} else {
+    die("Aucun auteur spécifié.");
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -19,23 +38,30 @@
     </header>
     <main>
         <section class="auteur-info"> 
-            <h2>Dr. Jean Dupont</h2>
+            <h2><?= htmlentities($auteur["nom"]);?></h2>
             <article>
                 <h4>Affilié à :</h4>
                 <ul>
-                    <li><a href="">Structure 1</a></li>
-                    <li><a href="">Structure 2 si jamais</a></li>
+                    <?php foreach ($structures as $structure) { ?>
+                        <li><a href="structure.php?nom=<?= urlencode($structure['nom_lab']); ?>">
+                            <?= htmlentities($structure['nom_lab']); ?>
+                        </a></li>
+                    <?php } ?>
                 </ul>
-                <p>A écrit / co-écrit : "NB_ARTICLE" articles</p>
+                <p>A écrit / co-écrit : <?= htmlentities($nbPublications); ?> articles</p>
             </article>
         </section>
         
         <section class="publications">
             <h3>Publications</h3>
             <ul>
-                <li><a href="#">Titre de la publication 1</a> - 2024</li>
-                <li><a href="#">Titre de la publication 2</a> - 2023</li>
-                <li><a href="#">Titre de la publication 3</a> - 2022</li>
+                <?php foreach ($publications as $publication) : ?>
+                    <li>
+                        <a href="publication.php?id=<?= urlencode($publication['id_dblp']); ?>">
+                            <?= htmlentities($publication['titre']); ?>
+                        </a> - <?= htmlentities($publication['annee']); ?>
+                    </li>
+                <?php endforeach; ?>
             </ul>
         </section>
     </main>
