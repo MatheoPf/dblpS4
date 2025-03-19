@@ -1,0 +1,110 @@
+@import url('https://fonts.cdnfonts.com/css/goudy-old-style');
+
+:root {
+    /****************
+        COULEURS
+    *****************/
+    --noir: #000;
+    --blanc: #f4f4f9;
+    --gris: #666;
+    --bleu: #1a2b5f;
+}
+
+body {
+    font-family: 'Goudy Old Style', sans-serif;
+    background-color: #f4f4f9;
+    color: var(--noir);
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    position: relative;
+    text-decoration: none;
+    color: var(--bleu);
+}
+
+a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 0;
+    height: 2px;
+    background-color: var(--bleu);
+    transition: width 0.3s ease-in-out;
+}
+
+a:hover::after {
+    width: 100%; /* La bordure s'affiche progressivement */
+}
+
+
+header {
+    background: var(--blanc);
+    color: var(--bleu);
+    padding: 0.3em;
+    border-bottom: 5px solid var(--bleu);
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+main {
+    padding:  0 8em;
+}
+
+h1 {
+    margin: 0.5em;
+    font-size: 24pt;
+}
+
+h2 {
+    font-size: 23pt;
+}
+
+h3 {
+    font-size: 19pt;
+}
+
+h4 {
+    font-size: 14pt;
+    margin: 0;
+}
+
+nav {
+    margin-left: 4em;
+}
+
+nav a {
+    margin: 0.5em;
+    font-size: 18pt;
+}
+
+.auteur-info {
+    margin-top: 2em;
+    padding-left: 1em;
+    border-left: 3px solid var(--gris);
+}
+
+.auteur-info article {
+    margin: 1em 1em 3em 3em;
+}
+
+
+
+
+
+
+
+
+footer {
+    height: 3em;
+    width: 100%;
+    background-color: var(--bleu);
+    color: var(--blanc);
+    position: fixed;
+    bottom: 0;
+}
