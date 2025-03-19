@@ -1,7 +1,7 @@
 <?php
-require_once 'utils.php';
+require_once "config.php";
+require_once "utils.php";
 
-$pdo = getDBConnection();
 $pid = isset($_GET['pid']) ? (int)$_GET['pid'] : null;
 
 if ($pid) {

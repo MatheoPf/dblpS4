@@ -1,7 +1,7 @@
-
 create schema if not exists AnalyseGeo;
 set schema 'AnalyseGeo';
 
+-- Table import_villes (temporaire)
 create table if not exists AnalyseGeo.import_villes (
     city varchar(50),
     city_ascii varchar(50),
@@ -17,50 +17,47 @@ create table if not exists AnalyseGeo.import_villes (
 );
 -- drop table AnalyseGeo.import_villes;
 
--- Création de la table _villes
+-- Table _villes
 create table if not exists AnalyseGeo._villes (
-	id integer not null primary key,
-	nom_ville varchar(50) not null,
-	latitude float not null,
-	longitude float not null,
-	iso char(4) not null,
-	nom_pays varchar(50) not null
+    id integer not null primary key,
+    nom_ville varchar(50) not null,
+    latitude float not null,
+    longitude float not null,
+    iso char(4) not null,
+    nom_pays varchar(50) not null
 );
---drop table AnalyseGeo._villes;
+-- drop table AnalyseGeo._villes;
 
+-- Table pays_continent
 create table if not exists AnalyseGeo.pays_continent(
   continent varchar(15),
   pays varchar(50)
-  );
+);
 -- drop table AnalyseGeo.pays_continent;
 
---	copy
+-- Chargement et insertion des données
 COPY AnalyseGeo.import_villes
 FROM '/docker-entrypoint-initdb.d/worldcities.csv'
 WITH (FORMAT csv, HEADER true, DELIMITER ',');
 
--- Insertion de import_villes à villes
 insert into AnalyseGeo._villes (id, nom_ville, latitude, longitude, iso, nom_pays)
 select distinct id, city_ascii, lat, lng, iso3, country
 from AnalyseGeo.import_villes
 on conflict (id) do nothing;
 
--- copy
 COPY AnalyseGeo.pays_continent (continent, pays)
 FROM '/docker-entrypoint-initdb.d/Countries-Continents.csv'
 WITH (DELIMITER ',', FORMAT csv, HEADER true);
 
--- Supprime la table temporaire
 drop table AnalyseGeo.import_villes;
 
-  
 create or replace view AnalyseGeo.touteslesinfos as (
-  select * from AnalyseGeo._villes inner join AnalyseGeo.pays_continent on pays = nom_pays);
+  select * from AnalyseGeo._villes inner join AnalyseGeo.pays_continent on pays = nom_pays
+);
 
-
--- Création table publication
+-- Table publications
 create table if not exists AnalyseGeo._publications (
-  id_dblp VARCHAR(50) PRIMARY KEY,
+  id_dblp VARCHAR(255) PRIMARY KEY,
   type VARCHAR(255),
   doi VARCHAR(255),
   titre VARCHAR(255),
@@ -72,36 +69,34 @@ create table if not exists AnalyseGeo._publications (
 );
 -- drop table AnalyseGeo._publications;
 
--- Création table revues
+-- Table revues
 CREATE TABLE if not exists AnalyseGeo._revues (
   volume VARCHAR(255),
   numero INTEGER
 ) inherits (AnalyseGeo._publications);
 ALTER TABLE AnalyseGeo._revues ADD PRIMARY KEY (id_dblp);
--- drop table AnalyseGeo._revues
+-- drop table AnalyseGeo._revues;
 
+-- Table conferences
 CREATE TABLE if not exists AnalyseGeo._conferences (
-  -- les données seront considérées plus tard
+  -- données à intégrer ultérieurement
 ) inherits (AnalyseGeo._publications);
 ALTER TABLE AnalyseGeo._conferences ADD PRIMARY KEY (id_dblp);
--- drop table AnalyseGeo._conférences
+-- drop table AnalyseGeo._conferences;
 
--- Création table auteurs
+-- Table auteurs (supprimée la colonne hal_id)
 CREATE TABLE if not exists AnalyseGeo._auteurs (
-  pid VARCHAR(50),
-  orc_id VARCHAR(20),
-  hal_id VARCHAR(255),
+  pid VARCHAR(255),
+  orc_id VARCHAR(255),
   nom VARCHAR(255)
 );
 ALTER TABLE AnalyseGeo._auteurs ADD PRIMARY KEY (pid);
-ALTER TABLE AnalyseGeo._auteurs ADD CONSTRAINT unique_hal_id UNIQUE (hal_id);
-
 -- drop table AnalyseGeo._auteurs;
 
--- Création table a_ecrit en lien avec les tables auteurs et publications
+-- Table a_ecrit : relation entre publications et auteurs
 CREATE TABLE if not exists AnalyseGeo.a_ecrit (
-  id_dblp VARCHAR(50),
-  pid VARCHAR(50),
+  id_dblp VARCHAR(255),
+  pid VARCHAR(255),
   ordre INT
 );
 ALTER TABLE AnalyseGeo.a_ecrit ADD PRIMARY KEY (id_dblp, pid);
@@ -109,35 +104,45 @@ ALTER TABLE AnalyseGeo.a_ecrit ADD FOREIGN KEY (id_dblp) REFERENCES AnalyseGeo._
 ALTER TABLE AnalyseGeo.a_ecrit ADD FOREIGN KEY (pid) REFERENCES AnalyseGeo._auteurs(pid);
 -- drop table AnalyseGeo.a_ecrit;
 
--- Création table _structures
-CREATE TABLE if not exists AnalyseGeo._structures (
-	id_lab integer,
-	acronyme varchar(50),
-	nom_lab varchar(255),
-	id_adresse int
-);
-ALTER TABLE AnalyseGeo._structures ADD PRIMARY KEY (id_lab);
-ALTER TABLE AnalyseGeo._structures ADD CONSTRAINT unique_id_adresse UNIQUE (id_adresse);
-
--- drop table AnalyseGeo._structures;
-
--- Création table _adresses en lien avec les table _structures et _villes
+-- Table adresses
 CREATE TABLE if not exists AnalyseGeo._adresses (
-	id_adresse serial,
-	cp int,
+  id_adresse serial,
+  cp int,
   rue varchar(255),
-	nom_ville varchar(100)
+  nom_ville varchar(100)
 );
 ALTER TABLE AnalyseGeo._adresses ADD PRIMARY KEY (id_adresse);
-ALTER TABLE AnalyseGeo._adresses ADD FOREIGN KEY (id_adresse) REFERENCES AnalyseGeo._structures(id_adresse);
 -- drop table AnalyseGeo._adresses;
 
--- Création table _est_affilie en lien avec les table _structures et _auteurs
-CREATE TABLE if not exists AnalyseGeo._est_affilie (
-    hal_id VARCHAR(50),
-    id_lab INTEGER
+-- Table structures
+CREATE TABLE if not exists AnalyseGeo._structures (
+  id_struct VARCHAR(50),
+  ror VARCHAR(255),
+  acronyme varchar(50),
+  nom_struct varchar(255),
+  id_adresse int
 );
-ALTER TABLE AnalyseGeo._est_affilie ADD PRIMARY KEY (hal_id, id_lab);
-ALTER TABLE AnalyseGeo._est_affilie ADD FOREIGN KEY (hal_id) REFERENCES AnalyseGeo._auteurs(hal_id) ON DELETE CASCADE;
-ALTER TABLE AnalyseGeo._est_affilie ADD FOREIGN KEY (id_lab) REFERENCES AnalyseGeo._structures(id_lab) ON DELETE CASCADE;
--- drop table AnalyseGeo._est_affilie;
+ALTER TABLE AnalyseGeo._structures ADD PRIMARY KEY (id_struct);
+ALTER TABLE AnalyseGeo._structures ADD CONSTRAINT unique_id_adresse UNIQUE (id_adresse);
+ALTER TABLE AnalyseGeo._structures ADD FOREIGN KEY (id_adresse) REFERENCES AnalyseGeo._adresses(id_adresse);
+-- drop table AnalyseGeo._structures;
+
+-- Nouvelle table affiliation : relation entre auteur et structure (affiliation)
+CREATE TABLE if not exists AnalyseGeo._affiliation (
+    pid VARCHAR(50),
+    id_struct VARCHAR(50),
+    PRIMARY KEY (pid, id_struct),
+    FOREIGN KEY (pid) REFERENCES AnalyseGeo._auteurs(pid) ON DELETE CASCADE,
+    FOREIGN KEY (id_struct) REFERENCES AnalyseGeo._structures(id_struct) ON DELETE CASCADE
+);
+-- drop table AnalyseGeo._affiliation;
+
+-- Table lineage : lie une structure à ses institutions parentes
+CREATE TABLE IF NOT EXISTS AnalyseGeo._lineage (
+  id_struct VARCHAR(50),
+  parent_lab VARCHAR(50),
+  position INT,
+  PRIMARY KEY (id_struct, parent_lab),
+  FOREIGN KEY (id_struct) REFERENCES AnalyseGeo._structures(id_struct) ON DELETE CASCADE
+);
+-- drop table AnalyseGeo._lineage;
