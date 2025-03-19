@@ -94,6 +94,8 @@ CREATE TABLE if not exists AnalyseGeo._auteurs (
   nom VARCHAR(255)
 );
 ALTER TABLE AnalyseGeo._auteurs ADD PRIMARY KEY (pid);
+ALTER TABLE AnalyseGeo._auteurs ADD CONSTRAINT unique_hal_id UNIQUE (hal_id);
+
 -- drop table AnalyseGeo._auteurs;
 
 -- Création table a_ecrit en lien avec les tables auteurs et publications
@@ -107,17 +109,19 @@ ALTER TABLE AnalyseGeo.a_ecrit ADD FOREIGN KEY (id_dblp) REFERENCES AnalyseGeo._
 ALTER TABLE AnalyseGeo.a_ecrit ADD FOREIGN KEY (pid) REFERENCES AnalyseGeo._auteurs(pid);
 -- drop table AnalyseGeo.a_ecrit;
 
--- Création table _affiliations
-CREATE TABLE if not exists AnalyseGeo._affiliations (
+-- Création table _structures
+CREATE TABLE if not exists AnalyseGeo._structures (
 	id_lab integer,
 	acronyme varchar(50),
 	nom_lab varchar(255),
 	id_adresse int
 );
-ALTER TABLE AnalyseGeo._affiliations ADD PRIMARY KEY (id_lab);
--- drop table AnalyseGeo._affiliations;
+ALTER TABLE AnalyseGeo._structures ADD PRIMARY KEY (id_lab);
+ALTER TABLE AnalyseGeo._structures ADD CONSTRAINT unique_id_adresse UNIQUE (id_adresse);
 
--- Création table _adresses en lien avec les table _affiliations et _villes
+-- drop table AnalyseGeo._structures;
+
+-- Création table _adresses en lien avec les table _structures et _villes
 CREATE TABLE if not exists AnalyseGeo._adresses (
 	id_adresse serial,
 	cp int,
@@ -125,15 +129,15 @@ CREATE TABLE if not exists AnalyseGeo._adresses (
 	nom_ville varchar(100)
 );
 ALTER TABLE AnalyseGeo._adresses ADD PRIMARY KEY (id_adresse);
-ALTER TABLE AnalyseGeo._adresses ADD FOREIGN KEY (id_adresse) REFERENCES AnalyseGeo._affiliations(id_adresse);
+ALTER TABLE AnalyseGeo._adresses ADD FOREIGN KEY (id_adresse) REFERENCES AnalyseGeo._structures(id_adresse);
 -- drop table AnalyseGeo._adresses;
 
--- Création table _est_affilie en lien avec les table _affiliations et _auteurs
+-- Création table _est_affilie en lien avec les table _structures et _auteurs
 CREATE TABLE if not exists AnalyseGeo._est_affilie (
     hal_id VARCHAR(50),
     id_lab INTEGER
 );
 ALTER TABLE AnalyseGeo._est_affilie ADD PRIMARY KEY (hal_id, id_lab);
 ALTER TABLE AnalyseGeo._est_affilie ADD FOREIGN KEY (hal_id) REFERENCES AnalyseGeo._auteurs(hal_id) ON DELETE CASCADE;
-ALTER TABLE AnalyseGeo._est_affilie ADD FOREIGN KEY (id_lab) REFERENCES AnalyseGeo._affiliations(id_lab) ON DELETE CASCADE;
+ALTER TABLE AnalyseGeo._est_affilie ADD FOREIGN KEY (id_lab) REFERENCES AnalyseGeo._structures(id_lab) ON DELETE CASCADE;
 -- drop table AnalyseGeo._est_affilie;
