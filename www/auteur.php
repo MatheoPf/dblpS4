@@ -11,9 +11,9 @@
         <h1>R4.C.10</h1>
         <nav>
             <a href="index.php">Accueil</a>
-            <a href="#">Auteurs</a>
-            <a href="#">Publications</a>
-            <a href="#">Structures</a>
+            <a href="auteur.php">Auteurs</a>
+            <a href="publication.php">Publications</a>
+            <a href="structure">Structures</a>
             <a href="#">Soumettre un article</a>
         </nav>
     </header>
