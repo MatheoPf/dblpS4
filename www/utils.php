@@ -2,32 +2,46 @@
 require_once "config.php";
 
 /**
- * Récupère les informations d'un auteur
+ * Récupère les informations d'un auteur.
+ *
+ * @param PDO    $pdo
+ * @param string $pid Le PID de l'auteur.
+ * @return array|null Les données de l'auteur ou null si non trouvé.
  */
 function getAuteur($pdo, $pid) {
     $query = "SELECT * FROM AnalyseGeo._auteurs WHERE pid = :pid";
     $stmt = $pdo->prepare($query);
-    $stmt->bindParam(':pid', $pid, PDO::PARAM_INT);
+    $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
     $stmt->execute();
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 /**
- * Récupère les structures affiliées à un auteur
+ * Récupère les structures affiliées à un auteur.
+ * 
+ * Mise à jour pour utiliser le PID (car la liaison se fait via la table _affiliation qui lie pid et id_struct).
+ *
+ * @param PDO    $pdo
+ * @param string $pid Le PID de l'auteur.
+ * @return array Liste des structures affiliées.
  */
-function getStructuresAffiliees($pdo, $hal_id) {
+function getStructuresAffiliees($pdo, $pid) {
     $query = "SELECT s.*
-              FROM AnalyseGeo._est_affilie e
-              JOIN AnalyseGeo._structures s ON e.id_lab = s.id_lab
-              WHERE e.hal_id = :hal_id";
+              FROM AnalyseGeo._affiliation a
+              JOIN AnalyseGeo._structures s ON a.id_struct = s.id_struct
+              WHERE a.pid = :pid";
     $stmt = $pdo->prepare($query);
-    $stmt->bindParam(':hal_id', $hal_id, PDO::PARAM_STR);
-    $stmt->execute(['hal_id' => $hal_id]);
+    $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /**
- * Récupère les publications d'un auteur
+ * Récupère les publications d'un auteur.
+ *
+ * @param PDO    $pdo
+ * @param string $pid Le PID de l'auteur.
+ * @return array Liste des publications.
  */
 function getPublications($pdo, $pid) {
     $query = "SELECT * 
@@ -36,7 +50,7 @@ function getPublications($pdo, $pid) {
               WHERE ae.pid = :pid
               ORDER BY p.annee DESC";
     $stmt = $pdo->prepare($query);
-    $stmt->bindParam(':pid', $pid, PDO::PARAM_INT);
+    $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -45,7 +59,7 @@ function getPublications($pdo, $pid) {
  * Récupère les données d'une publication depuis l'API OpenAlex à partir d'un DOI.
  *
  * @param string $doi Le DOI de la publication.
- * @return array|null Le tableau associatif des données ou null en cas d'erreur.
+ * @return array|null Tableau associatif des données ou null en cas d'erreur.
  */
 function recupererPublicationOpenAlex($doi) {
     $url = "https://api.openalex.org/works/https://doi.org/" . urlencode($doi);
@@ -59,8 +73,8 @@ function recupererPublicationOpenAlex($doi) {
 /**
  * Extrait la liste des auteurs depuis la publication OpenAlex.
  *
- * @param array $publication Le tableau associatif de la publication.
- * @return array Un tableau d'auteurs avec leur nom.
+ * @param array $publication Tableau associatif de la publication.
+ * @return array Liste d'auteurs avec leur nom.
  */
 function extraireAuteurs($publication) {
     $listeAuteurs = [];
@@ -86,7 +100,6 @@ function extraireAuteurs($publication) {
 function recupererPidDblp($nomAuteur) {
     $url = "https://dblp.org/search/author/api?q=" . urlencode($nomAuteur) . "&format=json";
     
-    // Création d'un contexte HTTP avec un User-Agent et timeout
     $options = array(
         'http' => array(
             'method'  => 'GET',
@@ -95,26 +108,17 @@ function recupererPidDblp($nomAuteur) {
         )
     );
     $context  = stream_context_create($options);
-    
-    // Tenter de récupérer la réponse
     $reponse = @file_get_contents($url, false, $context);
-    
-    // Si la requête échoue, on peut faire une pause avant de retourner null
     if ($reponse === FALSE) {
-        // Attendre 1 seconde pour éviter d'envoyer trop rapidement de nouvelles requêtes
         sleep(1);
         return null;
     }
-
     $json = json_decode($reponse, true);
-    
-    // Vérifier la présence d'un résultat et extraire le PID
     if (isset($json['result']['hits']['hit'][0]['info']['url'])) {
         $urlPid = $json['result']['hits']['hit'][0]['info']['url'];
         $pid = str_replace("https://dblp.org/pid/", "", $urlPid);
         return $pid;
     }
-    
     return null;
 }
 
@@ -122,12 +126,11 @@ function recupererPidDblp($nomAuteur) {
  * Récupère l'ORCID depuis DBLP pour un auteur donné à partir de son PID.
  *
  * @param string $pid Le PID de l'auteur.
- * @return string|null L'ORCID sans le préfixe "https://orcid.org/" ou null s'il n'est pas trouvé.
+ * @return string|null L'ORCID (sans le préfixe "https://orcid.org/") ou null s'il n'est pas trouvé.
  */
 function recupererOrcidDepuisDblp($pid) {
     $url = "https://dblp.org/pid/$pid.xml";
     
-    // Création d'un contexte HTTP avec un User-Agent personnalisé et un timeout
     $options = array(
         'http' => array(
             'method'  => 'GET',
@@ -136,21 +139,15 @@ function recupererOrcidDepuisDblp($pid) {
         )
     );
     $context = stream_context_create($options);
-    
-    // Utiliser file_get_contents avec le contexte
     $xmlContent = @file_get_contents($url, false, $context);
-    
     if ($xmlContent === FALSE) {
-        // Attendre une seconde en cas d'échec (429 Too Many Requests)
         sleep(1);
         return null;
     }
-    
     $xml = simplexml_load_string($xmlContent);
     if (!$xml) {
         return null;
     }
-    
     foreach ($xml->person->url as $urlBalise) {
         if (strpos($urlBalise, 'orcid.org') !== false) {
             return str_replace("https://orcid.org/", "", (string)$urlBalise);
@@ -183,7 +180,7 @@ function insererAuteur(PDO $pdo, $pid, $orcid, $nom) {
 /**
  * Vérifie si un auteur existe déjà dans la base de données.
  *
- * @param PDO $pdo Connexion PDO.
+ * @param PDO    $pdo Connexion PDO.
  * @param string $pid Le PID de l'auteur.
  * @return bool True si l'auteur existe, sinon False.
  */
@@ -196,30 +193,22 @@ function auteurExiste(PDO $pdo, $pid) {
 }
 
 /**
- * Ajoute un auteur dans la base de données s'il n'existe pas encore.
+ * Ajoute un auteur dans la base de données s'il n'existe pas déjà.
  *
- * @param PDO $pdo Connexion PDO.
+ * @param PDO    $pdo Connexion PDO.
  * @param string $nomAuteur Le nom complet de l'auteur.
  */
 function ajouterAuteurSiNexistePas(PDO $pdo, $nomAuteur) {
-    // Récupération du PID depuis DBLP
     $pid = recupererPidDblp($nomAuteur);
-    
     if (!$pid) {
         echo "Aucun PID trouvé pour l'auteur : $nomAuteur\n";
         return;
     }
-
-    // Vérifier si l'auteur est déjà en base
     if (auteurExiste($pdo, $pid)) {
         echo "L'auteur '$nomAuteur' (PID: $pid) est déjà en base, aucune insertion.\n";
         return;
     }
-    
-    // Récupérer l'ORCID depuis DBLP
     $orcid = recupererOrcidDepuisDblp($pid);
-    
-    // Insertion dans la table _auteurs
     insererAuteur($pdo, $pid, $orcid, $nomAuteur);
     echo "Auteur '$nomAuteur' (PID: $pid) inséré avec succès.\n";
 }
@@ -250,8 +239,6 @@ function recupererAffiliationsOpenAlex($orcid) {
  * @param array $institution Tableau associatif représentant l'institution (issu de l'API OpenAlex).
  */
 function insererStructure(PDO $pdo, $institution) {
-    // Extraction des données utiles
-    // L'id de l'institution est de la forme "https://openalex.org/I2802519937"
     $idInstitutionComplet = $institution['id'];
     $idInstitution = str_replace("https://openalex.org/", "", $idInstitutionComplet);
     $nomInstitution = $institution['display_name'];
@@ -266,7 +253,6 @@ function insererStructure(PDO $pdo, $institution) {
     $stmt->bindParam(':ror', $rorInstitution, PDO::PARAM_STR);
     $stmt->execute();
     
-    // Stocker également le lineage de l'institution si présent
     if (isset($institution['lineage']) && is_array($institution['lineage'])) {
         stockerLineage($pdo, $idInstitution, $institution['lineage']);
     }
@@ -312,44 +298,73 @@ function lierAffiliationAuteur(PDO $pdo, $pid, $idInstitution) {
 }
 
 /**
- * Interroge l'API ROR pour récupérer l'adresse d'une institution et l'insère dans la table _adresses.
+ * Interroge l'API ROR pour récupérer les informations d'adresse d'une institution et
+ * insère ou met à jour la ville dans la table _villes.
+ *
+ * Si la ville existe déjà (en se basant sur nom_ville et nom_pays), retourne son ID.
+ * Sinon, insère une nouvelle ville avec des valeurs par défaut pour latitude, longitude et iso.
  *
  * @param PDO    $pdo L'objet PDO.
  * @param string $ror L'URL ROR de l'institution (ex. "https://ror.org/00myn0z94").
- * @return bool True en cas de succès, false sinon.
+ * @return int|null L'ID de la ville dans _villes, ou null en cas d'échec.
  */
-function insererAdresseROR(PDO $pdo, $ror) {
-    // Extraire l'identifiant ROR de l'URL
+function insererVilleROR(PDO $pdo, $ror) {
+    // Extraire l'identifiant ROR
     $ror_id = str_replace("https://ror.org/", "", $ror);
     $url = "https://api.ror.org/organizations/" . $ror_id;
     
     $response = file_get_contents($url);
     if (!$response) {
-        echo "Erreur lors de la récupération de l'API ROR.";
-        return false;
+        echo "Erreur lors de la récupération de l'API ROR.<br>";
+        return null;
     }
     
     $json = json_decode($response, true);
     if (isset($json['addresses'][0])) {
         $adresse = $json['addresses'][0];
-        $cp = isset($adresse['postal_code']) ? (int)$adresse['postal_code'] : null;
-        $rue = isset($adresse['street']) ? $adresse['street'] : null;
         $nom_ville = isset($adresse['city']) ? $adresse['city'] : null;
+        // Si le pays n'est pas fourni, on utilise une valeur par défaut (par exemple "Inconnu")
+        $pays = (isset($adresse['country']) && !empty($adresse['country'])) ? $adresse['country'] : 'Inconnu';
         
-        $sql = "INSERT INTO AnalyseGeo._adresses (cp, rue, nom_ville)
-                VALUES (:cp, :rue, :nom_ville);";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':cp', $cp, PDO::PARAM_INT);
-        $stmt->bindParam(':rue', $rue, PDO::PARAM_STR);
+        if (!$nom_ville) {
+            echo "Aucune ville trouvée pour le ROR $ror.<br>";
+            return null;
+        }
+        
+        // Vérifier si la ville existe déjà dans _villes
+        $query = "SELECT id FROM AnalyseGeo._villes WHERE nom_ville = :nom_ville AND nom_pays = :nom_pays";
+        $stmt = $pdo->prepare($query);
         $stmt->bindParam(':nom_ville', $nom_ville, PDO::PARAM_STR);
+        $stmt->bindParam(':nom_pays', $pays, PDO::PARAM_STR);
+        $stmt->execute();
+        $existant = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($existant) {
+            echo "Ville '$nom_ville' déjà présente.<br>";
+            return $existant['id'];
+        }
+        
+        // Insérer une nouvelle ville avec des valeurs par défaut pour latitude, longitude, iso.
+        $sql = "INSERT INTO AnalyseGeo._villes (nom_ville, latitude, longitude, iso, nom_pays)
+                    VALUES (:nom_ville, :latitude, :longitude, :iso, :nom_pays)
+                    RETURNING id";
+        $stmt = $pdo->prepare($sql);
+        $defaultLat = 0.0;
+        $defaultLng = 0.0;
+        $defaultIso = 'XX';
+        $stmt->bindParam(':nom_ville', $nom_ville, PDO::PARAM_STR);
+        $stmt->bindParam(':latitude', $defaultLat, PDO::PARAM_STR);
+        $stmt->bindParam(':longitude', $defaultLng, PDO::PARAM_STR);
+        $stmt->bindParam(':iso', $defaultIso, PDO::PARAM_STR);
+        $stmt->bindParam(':nom_pays', $pays, PDO::PARAM_STR);
         $stmt->execute();
         
-        echo "Adresse insérée pour le ROR $ror.";
-        return true;
+        $newId = $stmt->fetchColumn();
+        echo "Ville '$nom_ville' insérée avec l'ID $newId.<br>";
+        return $newId;
     }
-    
-    echo "Aucune adresse trouvée pour le ROR $ror.";
-    return false;
-}
 
+    echo "Aucune adresse trouvée dans le ROR $ror.<br>";
+    return null;
+}
 ?>

@@ -63,9 +63,21 @@ foreach ($publications as $pub) {
                         lierAffiliationAuteur($pdo, $pid, $idInstitution);
                         echo "Affiliation liée : Auteur $pid -> Institution $idInstitution<br>";
                         
-                        // Optionnel : si le ROR est disponible, insérer l'adresse via l'API ROR
+                        // Si le ROR est disponible, insérer/mettre à jour la ville via l'API ROR
                         if (isset($affiliation['institution']['ror']) && !empty($affiliation['institution']['ror'])) {
-                            insererAdresseROR($pdo, $affiliation['institution']['ror']);
+                            $idVille = insererVilleROR($pdo, $affiliation['institution']['ror']);
+                            if ($idVille) {
+                                // Mise à jour de la structure pour associer la ville si non déjà renseignée
+                                $sqlUpdate = "UPDATE AnalyseGeo._structures 
+                                              SET id_ville = :id_ville 
+                                              WHERE id_struct = :id_struct 
+                                              AND (id_ville IS NULL OR id_ville = 0)";
+                                $stmtUpdate = $pdo->prepare($sqlUpdate);
+                                $stmtUpdate->bindParam(':id_ville', $idVille, PDO::PARAM_INT);
+                                $stmtUpdate->bindParam(':id_struct', $idInstitution, PDO::PARAM_STR);
+                                $stmtUpdate->execute();
+                                echo "Structure $idInstitution mise à jour avec l'ID ville $idVille.<br>";
+                            }
                         }
                     }
                 }
