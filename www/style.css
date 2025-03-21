@@ -43,8 +43,11 @@ a:hover::after {
 header {
     background: var(--blanc);
     color: var(--bleu);
-    padding: 0.3em;
+    padding: 0.2em;
     border-bottom: 5px solid var(--bleu);
+    position: sticky;
+    top: 0;
+    z-index: 9;
 
     display: flex;
     flex-direction: row;
@@ -93,18 +96,15 @@ nav a {
     margin: 1em 1em 3em 3em;
 }
 
-
-
-
-
-
-
-
 footer {
     height: 3em;
     width: 100%;
     background-color: var(--bleu);
     color: var(--blanc);
-    position: fixed;
-    bottom: 0;
+    padding: 1em;
+    margin: 5em;
+    position: static;
+
+    display: flex;
+    align-items: center;
 }

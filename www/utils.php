@@ -8,7 +8,7 @@ require_once "config.php";
  * @param string $pid Le PID de l'auteur.
  * @return array|null Les données de l'auteur ou null si non trouvé.
  */
-function getAuteur($pdo, $pid) {
+function recupererAuteur($pdo, $pid) {
     $query = "SELECT * FROM AnalyseGeo._auteurs WHERE pid = :pid";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
@@ -25,7 +25,7 @@ function getAuteur($pdo, $pid) {
  * @param string $pid Le PID de l'auteur.
  * @return array Liste des structures affiliées.
  */
-function getStructuresAffiliees($pdo, $pid) {
+function recupererStructuresAffiliees($pdo, $pid) {
     $query = "SELECT s.*
               FROM AnalyseGeo._affiliation a
               JOIN AnalyseGeo._structures s ON a.id_struct = s.id_struct
@@ -43,7 +43,7 @@ function getStructuresAffiliees($pdo, $pid) {
  * @param string $pid Le PID de l'auteur.
  * @return array Liste des publications.
  */
-function getPublications($pdo, $pid) {
+function recupererPublicationsParAuteur($pdo, $pid) {
     $query = "SELECT * 
               FROM AnalyseGeo.a_ecrit ae
               JOIN AnalyseGeo._publications p ON ae.id_dblp = p.id_dblp
@@ -53,6 +53,40 @@ function getPublications($pdo, $pid) {
     $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Récupère la liste des auteurs ayant écrit ou co-écrit une publication.
+ *
+ * @param PDO    $pdo      L'objet PDO.
+ * @param string $id_dblp  L'identifiant de la publication.
+ * @return array La liste des auteurs associés à cette publication.
+ */
+function recupererListeAuteurs(PDO $pdo, $id_dblp) {
+    $query = "SELECT a.*
+              FROM AnalyseGeo.a_ecrit ae
+              JOIN AnalyseGeo._auteurs a ON ae.pid = a.pid
+              WHERE ae.id_dblp = :id_dblp
+              ORDER BY ae.ordre ASC";
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':id_dblp', $id_dblp, PDO::PARAM_STR);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Récupère les informations d'une publication depuis la table _publications.
+ *
+ * @param PDO    $pdo      L'objet PDO.
+ * @param string $id_dblp  L'identifiant de la publication (ex. "10.1007/xxx" ou autre identifiant DBLP).
+ * @return array|null Les données de la publication ou null si non trouvée.
+ */
+function recupererUnePublication(PDO $pdo, $id_dblp) {
+    $query = "SELECT * FROM AnalyseGeo._publications WHERE id_dblp = :id_dblp";
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':id_dblp', $id_dblp, PDO::PARAM_STR);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 /**
@@ -301,7 +335,8 @@ function lierAffiliationAuteur(PDO $pdo, $pid, $idInstitution) {
  * Interroge l'API ROR pour récupérer les informations d'adresse d'une institution et
  * insère ou met à jour la ville dans la table _villes.
  *
- * Si la ville existe déjà (en se basant sur nom_ville et nom_pays), retourne son ID.
+ * Si une ville portant le même nom existe déjà avec des coordonnées valides
+ * (latitude différente de 0 et nom_pays différent de "Inconnu"), retourne son ID.
  * Sinon, insère une nouvelle ville avec des valeurs par défaut pour latitude, longitude et iso.
  *
  * @param PDO    $pdo L'objet PDO.
@@ -323,7 +358,7 @@ function insererVilleROR(PDO $pdo, $ror) {
     if (isset($json['addresses'][0])) {
         $adresse = $json['addresses'][0];
         $nom_ville = isset($adresse['city']) ? $adresse['city'] : null;
-        // Si le pays n'est pas fourni, on utilise une valeur par défaut (par exemple "Inconnu")
+        // Si le pays n'est pas fourni, on utilise "Inconnu"
         $pays = (isset($adresse['country']) && !empty($adresse['country'])) ? $adresse['country'] : 'Inconnu';
         
         if (!$nom_ville) {
@@ -331,23 +366,37 @@ function insererVilleROR(PDO $pdo, $ror) {
             return null;
         }
         
-        // Vérifier si la ville existe déjà dans _villes
-        $query = "SELECT id FROM AnalyseGeo._villes WHERE nom_ville = :nom_ville AND nom_pays = :nom_pays";
+        // Vérifier si une ville avec ce nom existe déjà et dispose de coordonnées valides
+        $query = "SELECT id, latitude, nom_pays FROM AnalyseGeo._villes WHERE nom_ville = :nom_ville";
         $stmt = $pdo->prepare($query);
         $stmt->bindParam(':nom_ville', $nom_ville, PDO::PARAM_STR);
-        $stmt->bindParam(':nom_pays', $pays, PDO::PARAM_STR);
         $stmt->execute();
-        $existant = $stmt->fetch(PDO::FETCH_ASSOC);
+        $villeExistante = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($existant) {
-            echo "Ville '$nom_ville' déjà présente.<br>";
-            return $existant['id'];
+        // Si on trouve une ville avec latitude != 0 et nom_pays différent de "Inconnu", on la considère valide.
+        if ($villeExistante && floatval($villeExistante['latitude']) != 0 && trim($villeExistante['nom_pays']) !== "Inconnu") {
+            echo "Ville '$nom_ville' déjà présente avec de bonnes coordonnées.<br>";
+            return $villeExistante['id'];
         }
         
-        // Insérer une nouvelle ville avec des valeurs par défaut pour latitude, longitude, iso.
+        // Sinon, si une ville existe mais qu'elle est "incomplète", vous pouvez décider de la mettre à jour.
+        // Ici, on préfère ne pas insérer un doublon.
+        if ($villeExistante) {
+            echo "Ville '$nom_ville' existante mais incomplète, mise à jour.<br>";
+            // Vous pouvez choisir de mettre à jour la ville avec les données issues de ROR si elles sont meilleures.
+            // Pour cet exemple, nous mettons à jour le nom du pays.
+            $updateQuery = "UPDATE AnalyseGeo._villes SET nom_pays = :nom_pays WHERE id = :id";
+            $updateStmt = $pdo->prepare($updateQuery);
+            $updateStmt->bindParam(':nom_pays', $pays, PDO::PARAM_STR);
+            $updateStmt->bindParam(':id', $villeExistante['id'], PDO::PARAM_INT);
+            $updateStmt->execute();
+            return $villeExistante['id'];
+        }
+        
+        // Aucune ville existante, insertion d'une nouvelle ville avec des valeurs par défaut pour latitude, longitude et iso.
         $sql = "INSERT INTO AnalyseGeo._villes (nom_ville, latitude, longitude, iso, nom_pays)
-                    VALUES (:nom_ville, :latitude, :longitude, :iso, :nom_pays)
-                    RETURNING id";
+                VALUES (:nom_ville, :latitude, :longitude, :iso, :nom_pays)
+                RETURNING id";
         $stmt = $pdo->prepare($sql);
         $defaultLat = 0.0;
         $defaultLng = 0.0;
@@ -363,8 +412,123 @@ function insererVilleROR(PDO $pdo, $ror) {
         echo "Ville '$nom_ville' insérée avec l'ID $newId.<br>";
         return $newId;
     }
-
+    
     echo "Aucune adresse trouvée dans le ROR $ror.<br>";
     return null;
 }
+
+
+/**
+ * Récupère une structure depuis la table _structures.
+ *
+ * @param PDO    $pdo       L'objet PDO.
+ * @param string $id_struct L'identifiant de la structure (ex. "I2802519937").
+ * @return array|null Les données de la structure ou null si non trouvée.
+ */
+function recupererStructure(PDO $pdo, $id_struct) {
+    $query = "SELECT * FROM AnalyseGeo._structures WHERE id_struct = :id_struct";
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':id_struct', $id_struct, PDO::PARAM_STR);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Récupère les informations d'une ville depuis la table _villes.
+ *
+ * @param PDO $pdo L'objet PDO.
+ * @param int $id_ville L'ID de la ville.
+ * @return array|null Les données de la ville ou null si non trouvées.
+ */
+function recupererVille(PDO $pdo, $id_ville) {
+    $query = "SELECT * FROM AnalyseGeo._villes WHERE id = :id_ville";
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':id_ville', $id_ville, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Récupère les auteurs affiliés à une structure via la table _affiliation.
+ *
+ * @param PDO    $pdo       L'objet PDO.
+ * @param string $id_struct L'identifiant de la structure.
+ * @return array Liste des auteurs affiliés.
+ */
+function recupererAuteursAffiliesStructure(PDO $pdo, $id_struct) {
+    $query = "SELECT a.*
+              FROM AnalyseGeo._affiliation af
+              JOIN AnalyseGeo._auteurs a ON af.pid = a.pid
+              WHERE af.id_struct = :id_struct";
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':id_struct', $id_struct, PDO::PARAM_STR);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Récupère les publications associées aux auteurs affiliés à une structure.
+ *
+ * Cette fonction retourne les publications des auteurs qui sont liés à la structure.
+ *
+ * @param PDO    $pdo       L'objet PDO.
+ * @param string $id_struct L'identifiant de la structure.
+ * @return array Liste des publications.
+ */
+function recupererPublicationsStructure(PDO $pdo, $id_struct) {
+    $query = "SELECT DISTINCT p.*
+              FROM AnalyseGeo.a_ecrit ae
+              JOIN AnalyseGeo._publications p ON ae.id_dblp = p.id_dblp
+              JOIN AnalyseGeo._affiliation af ON ae.pid = af.pid
+              WHERE af.id_struct = :id_struct
+              ORDER BY p.annee DESC";
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':id_struct', $id_struct, PDO::PARAM_STR);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Insère (ou met à jour) une publication dans la table _publications.
+ *
+ * @param PDO   $pdo                L'objet PDO.
+ * @param array $publicationData    Tableau associatif contenant les champs de la publication :
+ *                                  - id_dblp
+ *                                  - type
+ *                                  - doi
+ *                                  - titre
+ *                                  - lieu
+ *                                  - annee
+ *                                  - pages
+ *                                  - ee
+ *                                  - url_dblp
+ */
+function insererPublication(PDO $pdo, $publicationData) {
+    $sql = "INSERT INTO AnalyseGeo._publications 
+                (id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp)
+            VALUES 
+                (:id_dblp, :type, :doi, :titre, :lieu, :annee, :pages, :ee, :url_dblp)
+            ON CONFLICT (id_dblp) DO UPDATE SET
+                type     = EXCLUDED.type,
+                doi      = EXCLUDED.doi,
+                titre    = EXCLUDED.titre,
+                lieu     = EXCLUDED.lieu,
+                annee    = EXCLUDED.annee,
+                pages    = EXCLUDED.pages,
+                ee       = EXCLUDED.ee,
+                url_dblp = EXCLUDED.url_dblp";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':id_dblp', $publicationData['id_dblp'], PDO::PARAM_STR);
+    $stmt->bindParam(':type', $publicationData['type'], PDO::PARAM_STR);
+    $stmt->bindParam(':doi', $publicationData['doi'], PDO::PARAM_STR);
+    $stmt->bindParam(':titre', $publicationData['titre'], PDO::PARAM_STR);
+    $stmt->bindParam(':lieu', $publicationData['lieu'], PDO::PARAM_STR);
+    $stmt->bindParam(':annee', $publicationData['annee'], PDO::PARAM_INT);
+    $stmt->bindParam(':pages', $publicationData['pages'], PDO::PARAM_STR);
+    $stmt->bindParam(':ee', $publicationData['ee'], PDO::PARAM_STR);
+    $stmt->bindParam(':url_dblp', $publicationData['url_dblp'], PDO::PARAM_STR);
+    $stmt->execute();
+}
+
+
 ?>
