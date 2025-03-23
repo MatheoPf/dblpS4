@@ -111,6 +111,11 @@ nav a {
     margin: 1em 1em 3em 3em;
 }
 
+#map {
+    height: 600px;
+    width: 100%;
+}
+
 footer {
     height: 3em;
     width: 100%;

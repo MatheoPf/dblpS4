@@ -12,12 +12,13 @@ require_once "utils.php";
 </head>
 <body>
     <header>
-        <h1>R4.C10</h1>
+        <h1>R4.C.10</h1>
         <nav>
             <a href="index.php">Accueil</a>
             <a href="auteur.php">Auteurs</a>
             <a href="publication.php">Publications</a>
             <a href="structure.php">Structures</a>
+            <a href="carte.php">Carte</a>
         </nav>
     </header>
     <main>

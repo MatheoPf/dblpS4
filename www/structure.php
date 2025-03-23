@@ -4,12 +4,7 @@ require_once "utils.php";
 
 $id_struct = isset($_GET['id']) ? $_GET['id'] : null;
 
-if (!$id_struct) {
-    // Aucun identifiant de structure fourni : afficher la liste de toutes les structures
-    $sql = "SELECT * FROM AnalyseGeo._structures ORDER BY nom_struct ASC";
-    $stmt = $pdo->query($sql);
-    $listeStructures = $stmt->fetchAll(PDO::FETCH_ASSOC);
-?>
+if (!$id_struct) { ?>
     <!DOCTYPE html>
     <html lang="fr">
     <head>
@@ -20,27 +15,29 @@ if (!$id_struct) {
     </head>
     <body>
         <header>
-            <h1>R4.C10</h1>
+            <h1>R4.C.10</h1>
             <nav>
                 <a href="index.php">Accueil</a>
                 <a href="auteur.php">Auteurs</a>
                 <a href="publication.php">Publications</a>
                 <a href="structure.php">Structures</a>
+                <a href="carte.php">Carte</a>
             </nav>
         </header>
         <main>
             <section>
-                <?php if (!empty($listeStructures)) { ?>
-                    <ul>
-                        <?php foreach ($listeStructures as $structure) { ?>
-                            <li>
+                <?php
+                $listeStructures = recupererToutesStructure($pdo);
+                if (!empty($listeStructures)) {
+                    foreach ($listeStructures as $structure) { ?>
+                            <div>
                                 <a href="structure.php?id=<?= htmlentities($structure['id_struct']); ?>">
-                                    <?= html_entity_decode($structure['nom_struct']); ?>
+                                    <h3><?= html_entity_decode($structure['nom_struct']); ?></h3>
                                 </a>
-                            </li>
-                        <?php } ?>
-                    </ul>
-                <?php } else { ?>
+                                <p>Ville : <?= htmlentities($structure['nom_ville']); ?> | Pays : <?= htmlentities($structure['nom_pays']); ?></p>
+                            </div>
+                            <hr>
+                    <?php } } else { ?>
                     <p>Aucune structure trouvée.</p>
                 <?php } ?>
             </section>
@@ -88,6 +85,7 @@ $publications = recupererPublicationsStructure($pdo, $id_struct);
             <a href="auteur.php">Auteurs</a>
             <a href="publication.php">Publications</a>
             <a href="structure.php">Structures</a>
+            <a href="carte.php">Carte</a>
         </nav>
     </header>
     <main>

@@ -5,10 +5,6 @@ require_once "utils.php";
 $pid = isset($_GET['pid']) ? $_GET['pid'] : null;
 
 if (!$pid) {
-    // Aucun auteur spécifié : on affiche la liste de tous les auteurs
-    $sql = "SELECT * FROM AnalyseGeo._auteurs ORDER BY nom ASC";
-    $stmt = $pdo->query($sql);
-    $listeAuteurs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     ?>
     <!DOCTYPE html>
     <html lang="fr">
@@ -20,22 +16,33 @@ if (!$pid) {
     </head>
     <body>
         <header>
-            <h1>R4.C10</h1>
+            <h1>R4.C.10</h1>
             <nav>
                 <a href="index.php">Accueil</a>
                 <a href="auteur.php">Auteurs</a>
                 <a href="publication.php">Publications</a>
                 <a href="structure.php">Structures</a>
+                <a href="carte.php">Carte</a>
             </nav>
         </header>
         <main>
             <section>
-                <?php if (!empty($listeAuteurs)) { 
+                <?php
+                $listeAuteurs = recupererToutAuteurs($pdo);
+                if (!empty($listeAuteurs)) { 
                     foreach ($listeAuteurs as $auteur) { ?>
                         <div>
                             <a href="auteur.php?pid=<?= htmlentities($auteur['pid']); ?>">
-                                <?= html_entity_decode($auteur['nom']); ?>
+                                <h3><?= html_entity_decode($auteur['nom']); ?></h3>
                             </a>
+                            <?php
+                            $nbPubli = recupererNbPublicationsAuteur($pdo, $auteur['pid']);
+                            $nbStruct = recupererNbStructuresAffiliesAuteur($pdo, $auteur['pid']);
+                            ?>
+                            <p>
+                                Nombre de publication(s) : <?= htmlentities($nbPubli); ?> <br> 
+                                Nombre de structure(s) affiliée(s) : <?= htmlentities($nbStruct); ?> 
+                            </p>
                         </div>
                         <hr>
                 <?php } } else { ?>
@@ -79,6 +86,7 @@ $nbPublications = count($publications);
             <a href="auteur.php">Auteurs</a>
             <a href="publication.php">Publications</a>
             <a href="structure.php">Structures</a>
+            <a href="carte.php">Carte</a>
         </nav>
     </header>
     <main>

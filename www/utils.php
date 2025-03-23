@@ -17,6 +17,19 @@ function recupererAuteur(PDO $pdo, $pid) {
 }
 
 /**
+ * Récupère les informations d'un auteur.
+ *
+ * @param PDO    $pdo
+ * @return array|null La liste des auteurs ou null si non trouvé.
+ */
+function recupererToutAuteurs(PDO $pdo) {
+    $query = "SELECT DISTINCT * FROM AnalyseGeo._auteurs ORDER BY nom ASC";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
  * Récupère les structures affiliées à un auteur.
  * 
  * Mise à jour pour utiliser le PID (car la liaison se fait via la table _affiliation qui lie pid et id_struct).
@@ -448,6 +461,19 @@ function recupererStructure(PDO $pdo, $id_struct) {
 }
 
 /**
+ * Récupère toutes les structures avec les informations de sa ville depuis la table _structures et _villes.
+ *
+ * @param PDO    $pdo       L'objet PDO.
+ * @return array|null La liste des structures et les villes ou null si non trouvée.
+ */
+function recupererToutesStructure(PDO $pdo) {
+    $query = "SELECT * FROM AnalyseGeo._structures s join analysegeo._villes v on s.id_ville = v.id ORDER BY s.nom_struct ASC;";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
  * Récupère les informations d'une ville depuis la table _villes.
  *
  * @param PDO $pdo L'objet PDO pour la connexion à la base de données.
@@ -566,6 +592,74 @@ function recupererAuteursVedette(PDO $pdo, $limite = 5) {
     $stmt->execute();
     
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+/**
+ * Récupère le nombre de publications d'un auteur.
+ *
+ * Cette fonction retourne le nombre de publications associées à un auteur.
+ *
+ * @param PDO $pdo L'objet PDO pour la connexion à la base de données.
+ * @param string $pid L'identifiant de l'auteur.
+ * @return int Le nombre de publications de l'auteur.
+ */
+function recupererNbPublicationsAuteur(PDO $pdo, $pid) {
+    $sql = "SELECT COUNT(*) 
+            FROM AnalyseGeo.a_ecrit 
+            WHERE pid = :pid";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
+    $res = $stmt->execute();
+    
+    return $res;
+}
+
+/**
+ * Récupère le nombre de structures affiliées d'un auteur.
+ *
+ * Cette fonction retourne le nombre de structures auxquelles un auteur est affilié.
+ *
+ * @param PDO $pdo L'objet PDO pour la connexion à la base de données.
+ * @param string $pid L'identifiant de l'auteur.
+ * @return int Le nombre de structures affiliées de l'auteur.
+ */
+function recupererNbStructuresAffiliesAuteur(PDO $pdo, $pid) {
+    $sql = "SELECT COUNT(*) 
+            FROM AnalyseGeo._affiliation 
+            WHERE pid = :pid";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
+    $res = $stmt->execute();
+    
+    return $res;
+}
+
+/**
+ * Affiche une carte interactive des structures affiliées d'un auteur.
+ *
+ * Cette fonction récupère les structures affiliées (ainsi que leurs coordonnées géographiques)
+ * pour un auteur donné et retourne un code HTML intégrant une carte Leaflet qui affiche ces structures.
+ *
+ * @param PDO $pdo L'objet PDO pour la connexion à la base de données.
+ * @param string $pid L'identifiant de l'auteur.
+ * @return string Code HTML complet contenant la carte interactive.
+ */
+function afficherCarteStructuresAffilies(PDO $pdo) {
+    // Requête pour récupérer les structures affiliées et leurs coordonnées
+    $sql = "SELECT s.id_struct, s.nom_struct, v.latitude, v.longitude
+            FROM AnalyseGeo._affiliation a
+            JOIN AnalyseGeo._structures s ON a.id_struct = s.id_struct
+            JOIN AnalyseGeo._villes v ON s.id_ville = v.id;
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $structures = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Encodage des données en JSON pour utilisation dans la partie JavaScript
+    return json_encode($structures);
 }
 
 ?>
