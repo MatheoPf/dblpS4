@@ -2,15 +2,9 @@
 require_once "config.php";
 require_once "utils.php";
 
-// Récupérer l'identifiant de la publication depuis l'URL
 $idPublication = isset($_GET['id']) ? $_GET['id'] : null;
 
-if (!$idPublication) {
-    // Aucun identifiant de publication fourni : affichage de la liste de toutes les publications
-    $sql = "SELECT * FROM AnalyseGeo._publications ORDER BY annee DESC";
-    $stmt = $pdo->query($sql);
-    $listePublications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    ?>
+if (!$idPublication) { ?>
     <!DOCTYPE html>
     <html lang="fr">
     <head>
@@ -31,17 +25,18 @@ if (!$idPublication) {
         </header>
         <main>
             <section class="liste-publications">
-                <?php if (!empty($listePublications)) { ?>
-                    <ul>
-                        <?php foreach ($listePublications as $pub) { ?>
-                            <li>
-                                <a href="publications.php?id=<?= urlencode($pub['id_dblp']); ?>">
-                                    <?= htmlentities($pub['titre']); ?>
-                                </a> - <?= htmlentities($pub['annee']); ?>
-                            </li>
-                        <?php } ?>
-                    </ul>
-                <?php } else { ?>
+                <?php 
+                $listePublications = recupererToutesPublications($pdo);
+                if (!empty($listePublications)) {
+                    foreach ($listePublications as $pub) { ?>
+                        <div>
+                            <a href="publications.php?id=<?= htmlentities($pub['id_dblp']); ?>">
+                                <h3><?= html_entity_decode($pub['titre']); ?></h3>
+                            </a>
+                            <p>Année : <?= htmlentities($pub['annee']); ?> | Type : <?= htmlentities($pub['type']); ?> | Lieu : <?= htmlentities($pub['lieu']); ?></p>
+                        </div>
+                        <hr>
+                <?php }  } else { ?>
                     <p>Aucune publication trouvée.</p>
                 <?php } ?>
             </section>
@@ -74,7 +69,7 @@ $auteurs = recupererListeAuteurs($pdo, $idPublication);
 </head>
 <body>
     <header>
-        <h1>Plateforme Académique</h1>
+        <h1>R4.C10</h1>
         <nav>
             <a href="index.php">Accueil</a>
             <a href="auteur.php">Auteurs</a>
@@ -83,8 +78,8 @@ $auteurs = recupererListeAuteurs($pdo, $idPublication);
         </nav>
     </header>
     <main>
-        <section class="publication-info">
-            <h2><?= htmlentities($publication["titre"]); ?></h2>
+        <section>
+            <h2><?= html_entity_decode($publication["titre"]); ?></h2>
             <p><strong>Année :</strong> <?= htmlentities($publication["annee"]); ?></p>
             <?php if (!empty($publication["doi"])) { ?>
                 <p><strong>DOI :</strong> <?= htmlentities($publication["doi"]); ?></p>
@@ -97,7 +92,7 @@ $auteurs = recupererListeAuteurs($pdo, $idPublication);
             <?php } ?>
         </section>
         
-        <section class="auteurs-publication">
+        <section>
             <h3>Auteurs</h3>
             <?php if (!empty($auteurs)) { ?>
                 <ul>
