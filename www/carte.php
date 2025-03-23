@@ -1,59 +1,58 @@
 <?php
-require 'config.php';
-
-$sql = "SELECT s.id_struct, s.nom_struct, v.latitude, v.longitude 
-        FROM AnalyseGeo._structures s
-        JOIN AnalyseGeo._adresses a ON a.id_adresse = s.id_adresse
-        JOIN AnalyseGeo._villes v ON a.nom_ville = v.nom_ville";
-$stmt = $pdo->query($sql);
-$structures = $stmt->fetchAll(PDO::FETCH_ASSOC);
+require_once "config.php";
+require_once "utils.php";
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Globe des Structures</title>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-    <style>
-        html, body, #cesiumContainer {
-            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
-        }
-    </style>
+    <title>Carte des Structures Affiliées</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="cesiumContainer"></div>
+    <header>
+        <h1>R4.C.10</h1>
+        <nav>
+            <a href="index.php">Accueil</a>
+            <a href="auteur.php">Auteurs</a>
+            <a href="publication.php">Publications</a>
+            <a href="structure.php">Structures</a>
+            <a href="carte.php">Carte</a>
+        </nav>
+    </header>
     
-    <!-- CesiumJS -->
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
-    <script>
-        // Transmet les données PHP en JSON
-        const structures = <?php echo json_encode($structures); ?>;
-        
-        // Initialisation de Cesium
-        Cesium.Ion.defaultAccessToken = 'YOUR_CESIUM_ION_ACCESS_TOKEN'; // Remplacez par votre token
-        const viewer = new Cesium.Viewer('cesiumContainer', {
-            terrainProvider: Cesium.createWorldTerrain()
-        });
+    <main>
+    <h2>Carte des Structures Affiliées</h2>
+    <div id="map"></div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 Plateforme Académique</p>
+    </footer>
 
-        // Ajouter des entités pour chaque structure avec coordonnées
-        structures.forEach(structure => {
-            if(structure.latitude && structure.longitude) {
-                viewer.entities.add({
-                    name: structure.nom_struct,
-                    position: Cesium.Cartesian3.fromDegrees(parseFloat(structure.longitude), parseFloat(structure.latitude)),
-                    point: {
-                        pixelSize: 10,
-                        color: Cesium.Color.RED,
-                        outlineColor: Cesium.Color.WHITE,
-                        outlineWidth: 2
-                    },
-                    description: `<strong>${structure.nom_struct}</strong><br>ID: ${structure.id_struct}`
-                });
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Récupération des données JSON des structures depuis PHP
+        // Assurez-vous que la fonction afficherCarteStructuresAffilies($pdo) est incluse et accessible
+        var structures = <?php echo afficherCarteStructuresAffilies($pdo); ?>;
+        
+        // Initialisation de la carte centrée globalement
+        var map = L.map('map').setView([20, 0], 2);
+        
+        // Ajout d'une couche OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Parcours des structures pour ajouter des marqueurs sur la carte
+        structures.forEach(function(structure) {
+            if (structure.latitude && structure.longitude) {
+                var marker = L.marker([structure.latitude, structure.longitude]).addTo(map);
+                marker.bindPopup("<strong>" + structure.nom_struct + "</strong>");
             }
         });
-
-        // Zoom automatique sur toutes les entités
-        viewer.zoomTo(viewer.entities);
     </script>
 </body>
 </html>

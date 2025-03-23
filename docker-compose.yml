@@ -34,6 +34,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./sql/createdb.sql:/docker-entrypoint-initdb.d/createdb.sql  # Utilisation du fichier SQL
+      - ./data/worldcities.csv:/docker-entrypoint-initdb.d/worldcities.csv  # Ajout du fichier CSV
+      - ./data/Countries-Continents.csv:/docker-entrypoint-initdb.d/Countries-Continents.csv  # Ajout du fichier CSV
+
     networks:
       - app-network
     healthcheck:

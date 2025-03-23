@@ -59,6 +59,12 @@ main {
     padding:  0 8em;
 }
 
+main > p {
+    font-size: 20pt;
+    text-align: center;
+    font-style: italic;
+}
+
 h1 {
     margin: 0.5em;
     font-size: 24pt;
@@ -75,6 +81,15 @@ h3 {
 h4 {
     font-size: 14pt;
     margin: 0;
+}
+
+hr {
+    color: var(--bleu);
+    background-color: var(--bleu);
+    border: none;
+    height: 2px;
+    width: 75%;
+    margin: 2em auto;
 }
 
 nav {
@@ -96,13 +111,18 @@ nav a {
     margin: 1em 1em 3em 3em;
 }
 
+#map {
+    height: 600px;
+    width: 100%;
+}
+
 footer {
     height: 3em;
     width: 100%;
     background-color: var(--bleu);
     color: var(--blanc);
     padding: 1em;
-    margin: 5em;
+    margin-top: 5em;
     position: static;
 
     display: flex;

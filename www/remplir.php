@@ -1,8 +1,8 @@
 <?php
 // auto_fill.php : Script pour remplir automatiquement la base
 
-require 'config.php';
-require 'utils.php';
+require_once "config.php";
+require_once "utils.php";
 
 // Récupérer toutes les publications ayant un DOI dans la table _publications
 $sql = "SELECT doi FROM AnalyseGeo._publications WHERE doi IS NOT NULL";
@@ -38,7 +38,7 @@ foreach ($publications as $pub) {
         }
         
         // Récupérer l'ORCID depuis DBLP
-        $orcid = recupererOrcidDepuisDblp($pid);
+        $orcid = recupererOrcidDepuisDblp($pdo, $pid);
         
         // Insérer l'auteur dans _auteurs s'il n'existe pas déjà
         if (!auteurExiste($pdo, $pid)) {
@@ -89,5 +89,6 @@ foreach ($publications as $pub) {
     }
     echo "<hr>";
 }
+
 echo "Remplissage automatique terminé.";
 ?>

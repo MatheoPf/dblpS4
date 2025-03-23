@@ -2,15 +2,9 @@
 require_once "config.php";
 require_once "utils.php";
 
-// Récupération de l'identifiant de la structure passé en GET
 $id_struct = isset($_GET['id']) ? $_GET['id'] : null;
 
-if (!$id_struct) {
-    // Aucun identifiant de structure fourni : afficher la liste de toutes les structures
-    $sql = "SELECT * FROM AnalyseGeo._structures ORDER BY nom_struct ASC";
-    $stmt = $pdo->query($sql);
-    $listeStructures = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    ?>
+if (!$id_struct) { ?>
     <!DOCTYPE html>
     <html lang="fr">
     <head>
@@ -21,27 +15,29 @@ if (!$id_struct) {
     </head>
     <body>
         <header>
-            <h1>Liste des Structures</h1>
+            <h1>R4.C.10</h1>
             <nav>
                 <a href="index.php">Accueil</a>
                 <a href="auteur.php">Auteurs</a>
                 <a href="publication.php">Publications</a>
                 <a href="structure.php">Structures</a>
+                <a href="carte.php">Carte</a>
             </nav>
         </header>
         <main>
-            <section class="liste-structures">
-                <?php if (!empty($listeStructures)) { ?>
-                    <ul>
-                        <?php foreach ($listeStructures as $structure) { ?>
-                            <li>
-                                <a href="structure.php?id=<?= urlencode($structure['id_struct']); ?>">
-                                    <?= htmlentities($structure['nom_struct']); ?>
+            <section>
+                <?php
+                $listeStructures = recupererToutesStructure($pdo);
+                if (!empty($listeStructures)) {
+                    foreach ($listeStructures as $structure) { ?>
+                            <div>
+                                <a href="structure.php?id=<?= htmlentities($structure['id_struct']); ?>">
+                                    <h3><?= html_entity_decode($structure['nom_struct']); ?></h3>
                                 </a>
-                            </li>
-                        <?php } ?>
-                    </ul>
-                <?php } else { ?>
+                                <p>Ville : <?= htmlentities($structure['nom_ville']); ?> | Pays : <?= htmlentities($structure['nom_pays']); ?></p>
+                            </div>
+                            <hr>
+                    <?php } } else { ?>
                     <p>Aucune structure trouvée.</p>
                 <?php } ?>
             </section>
@@ -89,11 +85,12 @@ $publications = recupererPublicationsStructure($pdo, $id_struct);
             <a href="auteur.php">Auteurs</a>
             <a href="publication.php">Publications</a>
             <a href="structure.php">Structures</a>
+            <a href="carte.php">Carte</a>
         </nav>
     </header>
     <main>
-        <section class="structure-info">
-            <h2><?= htmlentities($structure["nom_struct"]); ?></h2>
+        <section>
+            <h2><?= html_entity_decode($structure["nom_struct"]); ?></h2>
             <?php if (!empty($structure["acronyme"])) { ?>
                 <p><strong>Acronyme :</strong> <?= htmlentities($structure["acronyme"]); ?></p>
             <?php } ?>
@@ -101,7 +98,7 @@ $publications = recupererPublicationsStructure($pdo, $id_struct);
                 <p><strong>ROR :</strong> <a href="<?= htmlentities($structure["ror"]); ?>" target="_blank"><?= htmlentities($structure["ror"]); ?></a></p>
             <?php } ?>
             <?php if ($ville) { ?>
-                <p><strong>Localisation :</strong> <?= htmlentities($ville["nom_ville"]); ?>, <?= htmlentities($ville["nom_pays"]); ?></p>
+                <p><strong>Localisation :</strong> <?= html_entity_decode($ville["nom_ville"]); ?>, <?= html_entity_decode($ville["nom_pays"]); ?></p>
             <?php } else { ?>
                 <p><strong>Localisation :</strong> Non renseignée</p>
             <?php } ?>
@@ -110,7 +107,7 @@ $publications = recupererPublicationsStructure($pdo, $id_struct);
             <?php } ?>
         </section>
         
-        <section class="auteurs-affilies">
+        <section>
             <h3>Auteurs affiliés</h3>
             <?php if (!empty($auteurs)) { ?>
                 <ul>
@@ -127,14 +124,14 @@ $publications = recupererPublicationsStructure($pdo, $id_struct);
             <?php } ?>
         </section>
         
-        <section class="publications-structure">
+        <section>
             <h3>Publications associées</h3>
             <?php if (!empty($publications)) { ?>
                 <ul>
                     <?php foreach ($publications as $publication) { ?>
                         <li>
                             <a href="publication.php?id=<?= htmlentities($publication["id_dblp"]); ?>">
-                                <?= htmlentities($publication["titre"]); ?>
+                                <?= html_entity_decode($publication["titre"]); ?>
                             </a> (<?= htmlentities($publication["annee"]); ?>)
                         </li>
                     <?php } ?>
