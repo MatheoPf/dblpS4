@@ -51,7 +51,7 @@ if (!$pid) {
             </section>
         </main>
         <footer>
-            <p>Mathéo PFRANGER- Camille POUPON</p>
+            <p>Mathéo PFRANGER  --  Camille POUPON</p>
         </footer>
     </body>
     </html>
@@ -130,7 +130,7 @@ $nbPublications = count($publications);
     </main>
     
     <footer>
-        <p>Mathéo PFRANGER- Camille POUPON</p>
+        <p>Mathéo PFRANGER  --  Camille POUPON</p>
     </footer>
 </body>
 </html>

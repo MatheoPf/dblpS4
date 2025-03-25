@@ -28,7 +28,7 @@ require_once "utils.php";
     </main>
     
     <footer>
-        <p>Mathéo PFRANGER- Camille POUPON</p>
+        <p>Mathéo PFRANGER  --  Camille POUPON</p>
     </footer>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

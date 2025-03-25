@@ -43,7 +43,7 @@ if (!$id_struct) { ?>
             </section>
         </main>
         <footer>
-            <p>Mathéo PFRANGER- Camille POUPON</p>
+            <p>Mathéo PFRANGER  --  Camille POUPON</p>
         </footer>
     </body>
     </html>
@@ -143,7 +143,7 @@ $publications = recupererPublicationsStructure($pdo, $id_struct);
     </main>
     
     <footer>
-        <p>Mathéo PFRANGER- Camille POUPON</p>
+        <p>Mathéo PFRANGER  --  Camille POUPON</p>
     </footer>
 </body>
 </html>
