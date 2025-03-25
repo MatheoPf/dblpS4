@@ -9,7 +9,7 @@ require_once "config.php";
  * @return array|null Les données de l'auteur ou null si non trouvé.
  */
 function recupererAuteur(PDO $pdo, $pid) {
-    $query = "SELECT DISTINCT * FROM AnalyseGeo._auteurs WHERE pid = :pid";
+    $query = "SELECT DISTINCT * FROM analysegeo._auteurs WHERE pid = :pid";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
     $stmt->execute();
@@ -23,7 +23,7 @@ function recupererAuteur(PDO $pdo, $pid) {
  * @return array|null La liste des auteurs ou null si non trouvé.
  */
 function recupererToutAuteurs(PDO $pdo) {
-    $query = "SELECT DISTINCT * FROM AnalyseGeo._auteurs ORDER BY nom ASC";
+    $query = "SELECT DISTINCT * FROM analysegeo._auteurs ORDER BY nom ASC";
     $stmt = $pdo->prepare($query);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -40,8 +40,8 @@ function recupererToutAuteurs(PDO $pdo) {
  */
 function recupererStructuresAffiliees(PDO $pdo, $pid) {
     $query = "SELECT DISTINCT s.*
-              FROM AnalyseGeo._affiliation a
-              JOIN AnalyseGeo._structures s ON a.id_struct = s.id_struct
+              FROM analysegeo._affiliation a
+              JOIN analysegeo._structures s ON a.id_struct = s.id_struct
               WHERE a.pid = :pid";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
@@ -57,7 +57,7 @@ function recupererStructuresAffiliees(PDO $pdo, $pid) {
  * @return array Liste des publications.
  */
 function recupererToutesPublications(PDO $pdo) {
-    $query = "SELECT DISTINCT * FROM AnalyseGeo._publications ORDER BY annee DESC";
+    $query = "SELECT DISTINCT * FROM analysegeo._publications ORDER BY annee DESC";
     $stmt = $pdo->prepare($query);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -72,8 +72,8 @@ function recupererToutesPublications(PDO $pdo) {
  */
 function recupererPublicationsParAuteur(PDO $pdo, $pid) {
     $query = "SELECT DISTINCT * 
-              FROM AnalyseGeo.a_ecrit ae
-              JOIN AnalyseGeo._publications p ON ae.id_dblp = p.id_dblp
+              FROM analysegeo.a_ecrit ae
+              JOIN analysegeo._publications p ON ae.id_dblp = p.id_dblp
               WHERE ae.pid = :pid
               ORDER BY p.annee DESC";
     $stmt = $pdo->prepare($query);
@@ -91,8 +91,8 @@ function recupererPublicationsParAuteur(PDO $pdo, $pid) {
  */
 function recupererListeAuteurs(PDO $pdo, $id_dblp) {
     $query = "SELECT a.*
-              FROM AnalyseGeo.a_ecrit ae
-              JOIN AnalyseGeo._auteurs a ON ae.pid = a.pid
+              FROM analysegeo.a_ecrit ae
+              JOIN analysegeo._auteurs a ON ae.pid = a.pid
               WHERE ae.id_dblp = :id_dblp
               ORDER BY ae.ordre ASC";
     $stmt = $pdo->prepare($query);
@@ -109,7 +109,7 @@ function recupererListeAuteurs(PDO $pdo, $id_dblp) {
  * @return array|null Les données de la publication ou null si non trouvée.
  */
 function recupererUnePublication(PDO $pdo, $id_dblp) {
-    $query = "SELECT DISTINCT * FROM AnalyseGeo._publications WHERE id_dblp = :id_dblp";
+    $query = "SELECT DISTINCT * FROM analysegeo._publications WHERE id_dblp = :id_dblp";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':id_dblp', $id_dblp, PDO::PARAM_STR);
     $stmt->execute();
@@ -124,7 +124,7 @@ function recupererUnePublication(PDO $pdo, $id_dblp) {
  * @return array|null Liste des publications ou null si non trouvée.
  */
 function recuperer5DernieresPublications(PDO $pdo, $limite = 5) {
-    $query = "SELECT DISTINCT * FROM AnalyseGeo._publications ORDER BY annee DESC LIMIT :limite";
+    $query = "SELECT DISTINCT * FROM analysegeo._publications ORDER BY annee DESC LIMIT :limite";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
     $stmt->execute();
@@ -259,7 +259,7 @@ function recupererOrcidDepuisDblp(PDO $pdo, $pid) {
  * @param string $nom   Le nom complet de l'auteur.
  */
 function insererAuteur(PDO $pdo, $pid, $orcid, $nom) {
-    $sql = "INSERT INTO AnalyseGeo._auteurs (pid, orc_id, nom)
+    $sql = "INSERT INTO analysegeo._auteurs (pid, orc_id, nom)
             VALUES (:pid, :orcid, :nom)
             ON CONFLICT (pid) DO UPDATE 
               SET orc_id = EXCLUDED.orc_id, 
@@ -279,7 +279,7 @@ function insererAuteur(PDO $pdo, $pid, $orcid, $nom) {
  * @return bool True si l'auteur existe, sinon False.
  */
 function auteurExiste(PDO $pdo, $pid) {
-    $sql = "SELECT COUNT(*) FROM AnalyseGeo._auteurs WHERE pid = :pid";
+    $sql = "SELECT COUNT(*) FROM analysegeo._auteurs WHERE pid = :pid";
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':pid', $pid, PDO::PARAM_STR);
     $stmt->execute();
@@ -338,7 +338,7 @@ function insererStructure(PDO $pdo, $institution) {
     $nomInstitution = $institution['display_name'];
     $rorInstitution = isset($institution['ror']) ? $institution['ror'] : null;
     
-    $sql = "INSERT INTO AnalyseGeo._structures (id_struct, nom_struct, ror)
+    $sql = "INSERT INTO analysegeo._structures (id_struct, nom_struct, ror)
             VALUES (:id_struct, :nom_struct, :ror)
             ON CONFLICT (id_struct) DO UPDATE SET nom_struct = EXCLUDED.nom_struct, ror = EXCLUDED.ror";
     $stmt = $pdo->prepare($sql);
@@ -356,7 +356,7 @@ function insererStructure(PDO $pdo, $institution) {
  * @param string $idInstitution L'identifiant de l'institution (ex. "I2802519937").
  */
 function lierAffiliationAuteur(PDO $pdo, $pid, $idInstitution) {
-    $sql = "INSERT INTO AnalyseGeo._affiliation (pid, id_struct)
+    $sql = "INSERT INTO analysegeo._affiliation (pid, id_struct)
             VALUES (:pid, :id_struct)
             ON CONFLICT (pid, id_struct) DO NOTHING";
     $stmt = $pdo->prepare($sql);
@@ -417,7 +417,7 @@ function insererVilleROR(PDO $pdo, $ror) {
     }
 
     // Vérifier si la ville existe déjà
-    $stmt = $pdo->prepare("SELECT id, latitude, nom_pays FROM AnalyseGeo._villes WHERE nom_ville = :nom_ville");
+    $stmt = $pdo->prepare("SELECT id, latitude, nom_pays FROM analysegeo._villes WHERE nom_ville = :nom_ville");
     $stmt->bindParam(':nom_ville', $nom_ville, PDO::PARAM_STR);
     $stmt->execute();
     $villeExistante = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -428,7 +428,7 @@ function insererVilleROR(PDO $pdo, $ror) {
 
     if ($villeExistante) {
         // Mise à jour de la ville existante
-        $updateStmt = $pdo->prepare("UPDATE AnalyseGeo._villes SET nom_pays = :nom_pays WHERE id = :id");
+        $updateStmt = $pdo->prepare("UPDATE analysegeo._villes SET nom_pays = :nom_pays WHERE id = :id");
         $updateStmt->bindParam(':nom_pays', $pays, PDO::PARAM_STR);
         $updateStmt->bindParam(':id', $villeExistante['id'], PDO::PARAM_INT);
         $updateStmt->execute();
@@ -436,7 +436,7 @@ function insererVilleROR(PDO $pdo, $ror) {
     }
 
     // Insertion d'une nouvelle ville
-    $stmt = $pdo->prepare("INSERT INTO AnalyseGeo._villes (nom_ville, latitude, longitude, iso, nom_pays)
+    $stmt = $pdo->prepare("INSERT INTO analysegeo._villes (nom_ville, latitude, longitude, iso, nom_pays)
                            VALUES (:nom_ville, 0.0, 0.0, 'XX', :nom_pays) RETURNING id");
     $stmt->bindParam(':nom_ville', $nom_ville, PDO::PARAM_STR);
     $stmt->bindParam(':nom_pays', $pays, PDO::PARAM_STR);
@@ -453,7 +453,7 @@ function insererVilleROR(PDO $pdo, $ror) {
  * @return array|null Les données de la structure ou null si non trouvée.
  */
 function recupererStructure(PDO $pdo, $id_struct) {
-    $query = "SELECT DISTINCT * FROM AnalyseGeo._structures WHERE id_struct = :id_struct";
+    $query = "SELECT DISTINCT * FROM analysegeo._structures WHERE id_struct = :id_struct";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':id_struct', $id_struct, PDO::PARAM_STR);
     $stmt->execute();
@@ -467,7 +467,7 @@ function recupererStructure(PDO $pdo, $id_struct) {
  * @return array|null La liste des structures et les villes ou null si non trouvée.
  */
 function recupererToutesStructure(PDO $pdo) {
-    $query = "SELECT * FROM AnalyseGeo._structures s join analysegeo._villes v on s.id_ville = v.id ORDER BY s.nom_struct ASC;";
+    $query = "SELECT * FROM analysegeo._structures s join analysegeo._villes v on s.id_ville = v.id ORDER BY s.nom_struct ASC;";
     $stmt = $pdo->prepare($query);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -481,7 +481,7 @@ function recupererToutesStructure(PDO $pdo) {
  * @return array|null Les données de la ville ou null si non trouvées.
  */
 function recupererVille(PDO $pdo, $id_ville) {
-    $query = "SELECT DISTINCT * FROM AnalyseGeo._villes WHERE id = :id_ville";
+    $query = "SELECT DISTINCT * FROM analysegeo._villes WHERE id = :id_ville";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':id_ville', $id_ville, PDO::PARAM_INT);
     $stmt->execute();
@@ -497,8 +497,8 @@ function recupererVille(PDO $pdo, $id_ville) {
  */
 function recupererAuteursAffiliesStructure(PDO $pdo, $id_struct) {
     $query = "SELECT DISTINCT a.*
-              FROM AnalyseGeo._affiliation af
-              JOIN AnalyseGeo._auteurs a ON af.pid = a.pid
+              FROM analysegeo._affiliation af
+              JOIN analysegeo._auteurs a ON af.pid = a.pid
               WHERE af.id_struct = :id_struct";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':id_struct', $id_struct, PDO::PARAM_STR);
@@ -517,9 +517,9 @@ function recupererAuteursAffiliesStructure(PDO $pdo, $id_struct) {
  */
 function recupererPublicationsStructure(PDO $pdo, $id_struct) {
     $query = "SELECT DISTINCT p.*
-              FROM AnalyseGeo.a_ecrit ae
-              JOIN AnalyseGeo._publications p ON ae.id_dblp = p.id_dblp
-              JOIN AnalyseGeo._affiliation af ON ae.pid = af.pid
+              FROM analysegeo.a_ecrit ae
+              JOIN analysegeo._publications p ON ae.id_dblp = p.id_dblp
+              JOIN analysegeo._affiliation af ON ae.pid = af.pid
               WHERE af.id_struct = :id_struct
               ORDER BY p.annee DESC";
     $stmt = $pdo->prepare($query);
@@ -544,7 +544,7 @@ function recupererPublicationsStructure(PDO $pdo, $id_struct) {
  *                                  - url_dblp
  */
 function insererPublication(PDO $pdo, $publicationData) {
-    $sql = "INSERT INTO AnalyseGeo._publications 
+    $sql = "INSERT INTO analysegeo._publications 
                 (id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp)
             VALUES 
                 (:id_dblp, :type, :doi, :titre, :lieu, :annee, :pages, :ee, :url_dblp)
@@ -581,8 +581,8 @@ function insererPublication(PDO $pdo, $publicationData) {
  */
 function recupererAuteursVedette(PDO $pdo, $limite = 5) {
     $sql = "SELECT DISTINCT a.pid, a.nom, COUNT(e.id_dblp) AS nb_publications 
-            FROM AnalyseGeo._auteurs a
-            JOIN AnalyseGeo.a_ecrit e ON a.pid = e.pid
+            FROM analysegeo._auteurs a
+            JOIN analysegeo.a_ecrit e ON a.pid = e.pid
             GROUP BY a.pid
             ORDER BY nb_publications DESC
             LIMIT :limite";
@@ -606,7 +606,7 @@ function recupererAuteursVedette(PDO $pdo, $limite = 5) {
  */
 function recupererNbPublicationsAuteur(PDO $pdo, $pid) {
     $sql = "SELECT COUNT(*) 
-            FROM AnalyseGeo.a_ecrit 
+            FROM analysegeo.a_ecrit 
             WHERE pid = :pid";
     
     $stmt = $pdo->prepare($sql);
@@ -627,7 +627,7 @@ function recupererNbPublicationsAuteur(PDO $pdo, $pid) {
  */
 function recupererNbStructuresAffiliesAuteur(PDO $pdo, $pid) {
     $sql = "SELECT COUNT(*) 
-            FROM AnalyseGeo._affiliation 
+            FROM analysegeo._affiliation 
             WHERE pid = :pid";
     
     $stmt = $pdo->prepare($sql);
@@ -650,9 +650,9 @@ function recupererNbStructuresAffiliesAuteur(PDO $pdo, $pid) {
 function afficherCarteStructuresAffilies(PDO $pdo) {
     // Requête pour récupérer les structures affiliées et leurs coordonnées
     $sql = "SELECT s.id_struct, s.nom_struct, v.latitude, v.longitude
-            FROM AnalyseGeo._affiliation a
-            JOIN AnalyseGeo._structures s ON a.id_struct = s.id_struct
-            JOIN AnalyseGeo._villes v ON s.id_ville = v.id;
+            FROM analysegeo._affiliation a
+            JOIN analysegeo._structures s ON a.id_struct = s.id_struct
+            JOIN analysegeo._villes v ON s.id_ville = v.id;
     ";
     $stmt = $pdo->prepare($sql);
     $stmt->execute();

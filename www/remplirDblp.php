@@ -1,20 +1,5 @@
 <?php 
-
-$server = 'db';
-$dbname = 'mydatabase';
-$user = 'user';
-$pass = 'password';
-
-try {
-    $dbh = new PDO("pgsql:host=$server;dbname=$dbname", 
-            $user, $pass);
-    
-    $dbh->prepare("SET SCHEMA 'analysegeo';")->execute();
-    
-} catch (PDOException $e) {
-    print "Erreur !: " . $e->getMessage() . "<br/>";
-    die();
-}
+require_once "config.php";
 
 $publi = file_get_contents('https://dblp.org/search/publ/api?q=author%3ALaurent%20d%27Orazio%3A&format=json');
 $publi_decode=json_decode($publi, true);
@@ -104,22 +89,22 @@ foreach ($publi_decode['result']['hits']['hit'] as $publi) {
         }
         
         try {
-            $query_pub = "INSERT INTO AnalyseGeo._publications(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) 
+            $query_pub = "INSERT INTO analysegeo._publications(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT (id_dblp) DO NOTHING;";
-            $stmt_pub = $dbh->prepare($query_pub);
+            $stmt_pub = $pdo->prepare($query_pub);
             $stmt_pub->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
 
             switch ($type) {
                 case 'Journal Articles':
-                    $query = "INSERT INTO AnalyseGeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    $stmt_publi = $dbh->prepare($query);
+                    $query = "INSERT INTO analysegeo._revues(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp, volume, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt_publi = $pdo->prepare($query);
                     $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp, $volume, $numero_page]);
                     break;
             
                 case 'Conference and Workshop Papers' :
-                    $query = "INSERT INTO AnalyseGeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    $stmt_publi = $dbh->prepare($query);
+                    $query = "INSERT INTO analysegeo._conferences(id_dblp, type, doi, titre, lieu, annee, pages, ee, url_dblp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt_publi = $pdo->prepare($query);
                     $stmt_publi->execute([$id_dblp, $type, $doi, $titre, $lieu, $annee, $pages, $ee, $url_dblp]);
                     break;
                 
@@ -128,7 +113,6 @@ foreach ($publi_decode['result']['hits']['hit'] as $publi) {
                     break;
             }
         } catch (Exception $e) {
-            $dbh->rollBack();
             print "Erreur PDO : " . $e->getMessage() . "<br/>";
         }
 
@@ -148,16 +132,16 @@ foreach ($publi_decode['result']['hits']['hit'] as $publi) {
             
 
             try {
-                $query = "INSERT INTO AnalyseGeo._auteurs(pid, nom) VALUES (?,?) ON CONFLICT (pid) DO NOTHING";
-                $stmt_auteur = $dbh->prepare($query);
+                $query = "INSERT INTO analysegeo._auteurs(pid, nom) VALUES (?,?) ON CONFLICT (pid) DO NOTHING";
+                $stmt_auteur = $pdo->prepare($query);
                 $stmt_auteur->execute([$auteur_pid, $auteur_nom]);
             } catch (PDOException $e) {
                 print "Erreur PDO auteur: " . $e->getMessage() . "<br/>";
             }
 
             try {
-                $query_a_ecrit = "INSERT INTO AnalyseGeo.a_ecrit(pid, id_dblp, ordre) VALUES (?,?,?);";
-                $stmt_a_ecrit = $dbh->prepare($query_a_ecrit);
+                $query_a_ecrit = "INSERT INTO analysegeo.a_ecrit(pid, id_dblp, ordre) VALUES (?,?,?);";
+                $stmt_a_ecrit = $pdo->prepare($query_a_ecrit);
                 $stmt_a_ecrit->execute([$auteur_pid, $id_dblp, $ordre_auteur]);
             } catch (PDOException $e) {
                 print "Erreur PDO a ecrit: " . $e->getMessage() . "<br/>";
@@ -175,6 +159,6 @@ foreach ($publi_decode['result']['hits']['hit'] as $publi) {
 
 
 
-$dbh = null;
+$pdo = null;
 
 ?>
