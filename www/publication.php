@@ -31,7 +31,7 @@ if (!$idPublication) { ?>
                 $listePublications = recupererToutesPublications($pdo);
                 if (!empty($listePublications)) {
                     foreach ($listePublications as $pub) { 
-                        
+
                         if(isset($pub['ee'])){
                             $lien = $pub['ee'];
                         }else {
@@ -40,10 +40,14 @@ if (!$idPublication) { ?>
                         
                         ?>
                         <div>
-                            <a href="<?= htmlentities($lien); ?>">
+                           <a href="publication.php?id=<?= htmlentities($publication['id_dblp']); ?>">
                                 <h3><?= html_entity_decode($pub['titre']); ?></h3>
                             </a>
-                            <p>Année : <?= htmlentities($pub['annee']); ?> | Type : <?= htmlentities($pub['type']); ?> | Lieu : <?= htmlentities($pub['lieu']); ?></p>
+                            <p>Année : <?= htmlentities($pub['annee']); ?>
+                             | Type : <?= htmlentities($pub['type']); ?> 
+                             | Parue dans : <?= htmlentities($pub['lieu']); ?>
+                             | Lien : <a href="publication.php?id=<?= htmlentities($publication['id_dblp']); ?>">
+                            </p>
                         </div>
                         <hr>
                 <?php }  } else { ?>
