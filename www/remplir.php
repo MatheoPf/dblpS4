@@ -5,7 +5,7 @@ require_once "config.php";
 require_once "utils.php";
 
 // Récupérer toutes les publications ayant un DOI dans la table _publications
-$sql = "SELECT doi FROM AnalyseGeo._publications WHERE doi IS NOT NULL";
+$sql = "SELECT doi FROM analysegeo._publications WHERE doi IS NOT NULL";
 $stmt = $pdo->query($sql);
 $publications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -68,7 +68,7 @@ foreach ($publications as $pub) {
                             $idVille = insererVilleROR($pdo, $affiliation['institution']['ror']);
                             if ($idVille) {
                                 // Mise à jour de la structure pour associer la ville si non déjà renseignée
-                                $sqlUpdate = "UPDATE AnalyseGeo._structures 
+                                $sqlUpdate = "UPDATE analysegeo._structures 
                                               SET id_ville = :id_ville 
                                               WHERE id_struct = :id_struct 
                                               AND (id_ville IS NULL OR id_ville = 0)";
