@@ -83,7 +83,7 @@ require_once "utils.php";
     </main>
     
     <footer>
-        <p>&copy; 2025 Plateforme Académique</p>
+        <p>Mathéo PFRANGER- Camille POUPON</p>
     </footer>
 </body>
 </html>

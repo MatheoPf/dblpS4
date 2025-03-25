@@ -56,7 +56,7 @@ if (!$idPublication) { ?>
             </section>
         </main>
         <footer>
-            <p>&copy; 2025 Plateforme Académique</p>
+            <p>Mathéo PFRANGER- Camille POUPON</p>
         </footer>
     </body>
     </html>
@@ -126,7 +126,7 @@ $auteurs = recupererListeAuteurs($pdo, $idPublication);
     </main>
     
     <footer>
-        <p>&copy; 2025 Plateforme Académique</p>
+        <p>Mathéo PFRANGER- Camille POUPON</p>
     </footer>
 </body>
 </html>
