@@ -31,6 +31,7 @@ if (!$idPublication) { ?>
                 $listePublications = recupererToutesPublications($pdo);
                 if (!empty($listePublications)) {
                     foreach ($listePublications as $pub) { 
+                        
                         if(isset($pub['ee'])){
                             $lien = $pub['ee'];
                         }else {
