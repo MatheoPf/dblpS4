@@ -29,15 +29,21 @@ require_once "utils.php";
             <?php 
             $publicationsRecente = recuperer5DernieresPublications($pdo);
             if (!empty($publicationsRecente)) { ?>
-                <?php foreach ($publicationsRecente as $pub) { ?>
+                <?php foreach ($publicationsRecente as $pub) { 
+                        if(isset($pub['ee'])){
+                            $lien = $pub['ee'];
+                        }else {
+                            $lien = $pub['url_dblp'];
+                        }
+                    ?>
                     <div>
                         <a href="publication.php?id=<?= htmlentities($pub['id_dblp']); ?>">
                             <h3><?= html_entity_decode($pub['titre']); ?></h3>
                         </a>
                         <p>Année : <?= htmlentities($pub['annee']); ?> 
                         | Type : <?= htmlentities($pub['type']); ?> 
-                        | Lieu : <?= htmlentities($pub['lieu']); ?>
-                        | Lien : <a href="publication.php?id=<?= htmlentities($publication['id_dblp']); ?>">
+                        | Parue dans : <?= htmlentities($pub['lieu']); ?>
+                        | Lien : <a href="<?= htmlentities($lien); ?>">publication originale</a>
                         </p>
                     </div>
                     <hr>
@@ -83,7 +89,7 @@ require_once "utils.php";
     </main>
     
     <footer>
-        <p>Mathéo PFRANGER- Camille POUPON</p>
+        <p>Mathéo PFRANGER  --  Camille POUPON</p>
     </footer>
 </body>
 </html>

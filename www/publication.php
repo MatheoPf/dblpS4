@@ -31,7 +31,6 @@ if (!$idPublication) { ?>
                 $listePublications = recupererToutesPublications($pdo);
                 if (!empty($listePublications)) {
                     foreach ($listePublications as $pub) { 
-
                         if(isset($pub['ee'])){
                             $lien = $pub['ee'];
                         }else {
@@ -46,7 +45,7 @@ if (!$idPublication) { ?>
                             <p>Année : <?= htmlentities($pub['annee']); ?>
                              | Type : <?= htmlentities($pub['type']); ?> 
                              | Parue dans : <?= htmlentities($pub['lieu']); ?>
-                             | Lien : <a href="publication.php?id=<?= htmlentities($pub['ee']); ?>">Lien vers la publication de base</a>
+                             | Lien : <a href="<?= htmlentities($lien); ?>">publication originale</a>
                             </p>
                         </div>
                         <hr>
@@ -56,7 +55,7 @@ if (!$idPublication) { ?>
             </section>
         </main>
         <footer>
-            <p>Mathéo PFRANGER- Camille POUPON</p>
+            <p>Mathéo PFRANGER  --  Camille POUPON</p>
         </footer>
     </body>
     </html>
@@ -100,7 +99,10 @@ $auteurs = recupererListeAuteurs($pdo, $idPublication);
                 <p><strong>DOI :</strong> <?= htmlentities($publication["doi"]); ?></p>
             <?php } ?>
             <?php if (!empty($publication["lieu"])) { ?>
-                <p><strong>Lieu :</strong> <?= htmlentities($publication["lieu"]); ?></p>
+                <p><strong>Parue dans :</strong> <?= htmlentities($publication["lieu"]); ?></p>
+            <?php } ?>
+            <?php if (!empty($publication["pages"])) { ?>
+                <p><strong>Pages :</strong> <?= htmlentities($publication["pages"]); ?></p>
             <?php } ?>
             <?php if (!empty($publication["type"])) { ?>
                 <p><strong>Type :</strong> <?= htmlentities($publication["type"]); ?></p>
@@ -126,7 +128,7 @@ $auteurs = recupererListeAuteurs($pdo, $idPublication);
     </main>
     
     <footer>
-        <p>Mathéo PFRANGER- Camille POUPON</p>
+        <p>Mathéo PFRANGER  --  Camille POUPON</p>
     </footer>
 </body>
 </html>
