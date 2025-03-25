@@ -66,9 +66,9 @@ require_once "utils.php";
         <section>
             <h2>Statistiques</h2>
             <?php
-            $nbPublications = $pdo->query("SELECT COUNT(*) FROM AnalyseGeo._publications")->fetchColumn();
-            $nbAuteurs = $pdo->query("SELECT COUNT(*) FROM AnalyseGeo._auteurs")->fetchColumn();
-            $nbStructures = $pdo->query("SELECT COUNT(*) FROM AnalyseGeo._structures")->fetchColumn();
+            $nbPublications = $pdo->query("SELECT COUNT(*) FROM analysegeo._publications")->fetchColumn();
+            $nbAuteurs = $pdo->query("SELECT COUNT(*) FROM analysegeo._auteurs")->fetchColumn();
+            $nbStructures = $pdo->query("SELECT COUNT(*) FROM analysegeo._structures")->fetchColumn();
             ?>
             <ul>
                 <li>Total des publications : <?= htmlentities($nbPublications); ?></li>
