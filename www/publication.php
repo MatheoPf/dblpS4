@@ -27,11 +27,19 @@ if (!$idPublication) { ?>
         <main>
             <section class="liste-publications">
                 <?php 
+                
                 $listePublications = recupererToutesPublications($pdo);
                 if (!empty($listePublications)) {
-                    foreach ($listePublications as $pub) { ?>
+                    foreach ($listePublications as $pub) { 
+                        if(isset($pub['ee'])){
+                            $lien = $pub['ee'];
+                        }else {
+                            $lien = $pub['url_dblp'];
+                        }
+                        
+                        ?>
                         <div>
-                            <a href="publications.php?id=<?= htmlentities($pub['id_dblp']); ?>">
+                            <a href="<?= htmlentities($lien); ?>">
                                 <h3><?= html_entity_decode($pub['titre']); ?></h3>
                             </a>
                             <p>Année : <?= htmlentities($pub['annee']); ?> | Type : <?= htmlentities($pub['type']); ?> | Lieu : <?= htmlentities($pub['lieu']); ?></p>
